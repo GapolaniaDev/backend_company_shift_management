@@ -5,7 +5,7 @@ use App\Http\Controllers\AuthController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
-Route::get('/data', function () {
+Route::middleware('auth:api')->get('/data', function () {
     return [
         [
             "nombre" => "Juan Pérez",
