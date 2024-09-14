@@ -4,15 +4,18 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\ShiftGenerationController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:api')->controller(DashboardController::class)->group(function () {
     Route::get('/employees', 'index');
-    // Otras rutas del controlador pueden ser añadidas aquí
 });
 
+Route::middleware('auth:api')->controller(ShiftGenerationController::class)->group(function () {
+    Route::get('/generateNextFortnightShifts', 'generateNextFortnightShifts');
+});
 
 Route::middleware('auth:api')->get('/data', function () {
     return [
@@ -50,6 +53,36 @@ Route::middleware('auth:api')->get('/data', function () {
             "email" => "pedro.martinez@example.com",
             "telefono" => "789-012-3456",
             "direccion" => "Calle del Arco 321, Pueblo Ejemplo"
+        ],
+        [
+            'Monday' => [
+                'date_start' => date('Y-m-d 00:00:00', strtotime('Monday')),
+                'date_finish' => date('Y-m-d 23:59:59', strtotime('Monday')),
+            ],
+            'Tuesday' => [
+                'date_start' => date('Y-m-d 00:00:00', strtotime('Tuesday')),
+                'date_finish' => date('Y-m-d 23:59:59', strtotime('Tuesday')),
+            ],
+            'Wednesday' => [
+                'date_start' => date('Y-m-d 00:00:00', strtotime('Wednesday')),
+                'date_finish' => date('Y-m-d 23:59:59', strtotime('Wednesday')),
+            ],
+            'Thursday' => [
+                'date_start' => date('Y-m-d 00:00:00', strtotime('Thursday')),
+                'date_finish' => date('Y-m-d 23:59:59', strtotime('Thursday')),
+            ],
+            'Friday' => [
+                'date_start' => date('Y-m-d 00:00:00', strtotime('Friday')),
+                'date_finish' => date('Y-m-d 23:59:59', strtotime('Friday')),
+            ],
+            'Saturday' => [
+                'date_start' => date('Y-m-d 00:00:00', strtotime('Saturday')),
+                'date_finish' => date('Y-m-d 23:59:59', strtotime('Saturday')),
+            ],
+            'Sunday' => [
+                'date_start' => date('Y-m-d 00:00:00', strtotime('Sunday')),
+                'date_finish' => date('Y-m-d 23:59:59', strtotime('Sunday')),
+            ],
         ]
     ];
 });

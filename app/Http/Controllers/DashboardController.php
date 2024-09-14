@@ -16,13 +16,15 @@ class DashboardController extends Controller
         $employees = Employee::all();
 
         // Formatear la respuesta
-        $formattedEmployees = $employees->map(function($employee) {
+        $formattedEmployees = $employees->map(function ($employee) {
             return [
+                'id' => $employee->id,
                 'firstName' => $employee->first_name,
                 'lastName' => $employee->last_name,
                 'email' => $employee->email,
                 'phone' => $employee->phone,
                 'address' => $employee->address,
+                'position' => 'cleaner'
             ];
         });
 
