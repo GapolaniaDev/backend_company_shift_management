@@ -9,6 +9,10 @@ class ShiftType extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'schedule' => 'array',
+    ];
+
     /**
      * The attributes that are mass assignable.
      *

@@ -2,16 +2,25 @@
 
 namespace App\Http\Controllers;
 
-use Carbon\Carbon;
-use Illuminate\Http\Request;
-use App\Models\ShiftType;
 use App\Models\Employee;
 use App\Models\PayPeriod;
 use App\Models\ShiftConfiguration;
-use Illuminate\Support\Facades\Log;
+use App\Models\Shift;
+use DateTime;
+use DateInterval;
+use DatePeriod;
+use Carbon\Carbon;
 
 class ShiftGenerationController extends Controller
 {
+
+    private $dateTime_start;
+    private $dateTime_end;
+
+    private $weekDayCode;
+
+    private $hours;
+
     public function generateNextFortnightShifts()
     {
 
@@ -19,34 +28,60 @@ class ShiftGenerationController extends Controller
         $endDate = $startDate->copy()->addDays(14);
 
         $shiftConfigurations = ShiftConfiguration::all();
-        Log::info('Accediste al método generateNextFortnightShifts del controlador!');
         foreach ($shiftConfigurations as $config) {
-            return response()->json([
-                $config->shiftType
-            ]);
-            /*$shiftType = $config->shiftType;
-            $employee = $config->employee;*/
-
-            /*$shiftDuration = $config->shift_duration;
-
-            // La lógica para crear turnos
-            for ($date = $startDate; $date->lessThan($endDate); $date->addDay()) {
-                Shift::create([
-                    'shift_type_id' => $shiftType->id,
-                    'employee_id' => $employee->id,
-                    'date_start' => $date->copy()->setTime(9, 0),  // Ejemplo de hora de inicio
-                    'date_end' => $date->copy()->setTime(9, 0)->addHours($shiftDuration),
-                    'total_hours' => $shiftDuration,
-                    'weekday_code' => $date->format('D'),
-                    'comments' => 'Turno generado automáticamente',
-                ]);
-            }*/
+            $days = $this->getDaysWithAcronyms($startDate, $endDate);
+            foreach ($days as $day) {
+                if ($this->compareSchedules($config->shiftType->schedule, $day)) {
+                    Shift::create([
+                        'shift_type_id' => $config->shiftType->id,
+                        'employee_id' => $config->employee->id,
+                        'date_start' => $this->dateTime_start,
+                        'date_end' => $this->dateTime_end,
+                        'total_hours' => $this->hours,
+                        'weekday_code' => $this->weekDayCode
+                    ]);
+                }
+            }
         }
 
+        // Retornar una respuesta
         return response()->json([
-            $startDate,
-            $endDate,
-            $shiftConfigurations
-        ]);
+            'message' => 'Shift created successfully!'
+        ], 201);
+    }
+
+    private function getDaysWithAcronyms($startDate, $endDate)
+    {
+        $start = new DateTime($startDate);
+        $start->modify('+1 day');
+        $end = new DateTime($endDate);
+        $end->modify('+1 day');
+
+        $interval = new DateInterval('P1D');
+        $datePeriod = new DatePeriod($start, $interval, $end);
+
+        $days = [];
+        foreach ($datePeriod as $date) {
+            $days[] = [
+                'date' => $date->format('Y-m-d'),
+                'day_acronym' => $date->format('D'),
+            ];
+        }
+
+        return $days;
+    }
+
+    private function compareSchedules(array $schedule, $day)
+    {
+        $dayAcronym = $day['day_acronym'];
+        if (array_key_exists($dayAcronym, $schedule)) {
+            $this->dateTime_start = Carbon::parse($day['date'] . ' ' . $schedule[$dayAcronym]['time_start']);
+            $this->dateTime_end = Carbon::parse($day['date'] . ' ' . $schedule[$dayAcronym]['time_finish']);
+            $this->weekDayCode = $day['day_acronym'];
+            $totalMinutes = $this->dateTime_end->diffInMinutes($this->dateTime_start);
+            $this->hours = $totalMinutes / 60;
+            return true;
+        }
+        return false;
     }
 }
