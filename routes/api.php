@@ -5,12 +5,18 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ShiftGenerationController;
+use App\Http\Controllers\ShiftController;
+
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
 Route::middleware('auth:api')->controller(DashboardController::class)->group(function () {
     Route::get('/employees', 'index');
+});
+
+Route::middleware('auth:api')->controller(ShiftController::class)->group(function () {
+    Route::get('/shifts', 'index');
 });
 
 Route::middleware('auth:api')->controller(ShiftGenerationController::class)->group(function () {
