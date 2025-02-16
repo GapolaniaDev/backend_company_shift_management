@@ -23,6 +23,13 @@ Route::middleware('auth:api')->controller(ShiftGenerationController::class)->gro
     Route::get('/generateNextFortnightShifts', 'generateNextFortnightShifts');
 });
 
+Route::get('/test', function (Request $request) {
+    return response()->json([
+        'message' => 'Ruta de prueba funcionando correctamente',
+        'timestamp' => now()
+    ]);
+});
+
 Route::middleware('auth:api')->get('/data', function () {
     return [
         [
