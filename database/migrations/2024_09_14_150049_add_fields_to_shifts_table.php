@@ -13,8 +13,8 @@ return new class extends Migration
     {
         Schema::table('shifts', function (Blueprint $table) {
             $table->integer('status')->default(0)->comment('0 not confirmed, 1 confirmed, 2 rejected');
-            $table->date('date_start_employee')->nullable();
-            $table->date('date_finish_employee')->nullable();
+            $table->dateTime('date_start_employee')->nullable();
+            $table->dateTime('date_finish_employee')->nullable();
         });
     }
 
