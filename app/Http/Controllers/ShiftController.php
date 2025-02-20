@@ -32,9 +32,9 @@ class ShiftController extends Controller
      */
     public function index()
     {
-        //$today = Carbon::today();
-        $date = '2024-09-16';
-        $today = new Carbon($date);
+        $today = Carbon::today();
+        /*$date = '2024-09-16';
+        $today = new Carbon($date);*/
 
         $shifts = Shift::with('employee')
             ->where('date_start', '<=', $today->endOfDay())
@@ -58,6 +58,35 @@ class ShiftController extends Controller
         });
 
         return response()->json($formattedShifts);
+    }
+
+
+    public function getTodayShift(Request $request)
+    {
+        // Obtener al usuario autenticado
+        $user = $request->user();
+
+        // Fecha de hoy
+        $today = Carbon::now()->toDateString();
+
+        // Buscar el turno del usuario para hoy
+        $shift = Shift::where('employee_id', $user->id)
+            ->whereDate('date_start', '<=', $today)
+            ->whereDate('date_end', '>=', $today)
+            ->first();
+
+        // Verificar si se encontró un turno
+        if ($shift) {
+            return response()->json([
+                'success' => true,
+                'shift' => $shift
+            ], 200);
+        } else {
+            return response()->json([
+                'success' => false,
+                'message' => 'No shift found for today'
+            ], 404);
+        }
     }
 
     public function generateProfileTextAndColor($var1, $var2)

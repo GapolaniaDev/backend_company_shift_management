@@ -14,25 +14,33 @@ class ShiftsTableSeeder extends Seeder
     {
         $faker = Faker::create();
 
-        // Rango de empleados.
+        // Range of employees.
         $employees = range(1, 11);
 
-        // Días laborales: Lunes (1) a Viernes (5).
+        // Working days: Monday (1) to Friday (5).
         $workDays = [1, 2, 3, 4, 5];
 
-        // Fechas de inicio y fin.
+        // Start and end dates.
         $startDate = Carbon::create(2025, 1, 1);
         $endDate = Carbon::create(2025, 7, 31);
 
-        // Bucle por cada día dentro del rango de fechas.
+        // Bounding box for Adelaide, Postcode 5000 (latitude and longitude range)
+        $adelaideBounds = [
+            'min_lat' => -34.9331,
+            'max_lat' => -34.9202,
+            'min_lng' => 138.5937,
+            'max_lng' => 138.6135,
+        ];
+
+        // Iterate through each day within the date range.
         while ($startDate->lte($endDate)) {
-            // Verificar si el día actual es laboral (Lunes-Viernes).
+            // Check if the current day is a working day (Monday-Friday).
             if (in_array($startDate->dayOfWeek, $workDays)) {
                 foreach ($employees as $employeeId) {
-                    // Generar horas del turno (entre 4 y 8).
+                    // Generate shift hours (between 4 and 8).
                     $hours = $faker->randomFloat(2, 4, 8);
 
-                    // Hora de inicio aleatoria entre las 8am y 12pm.
+                    // Random start time between 8am and 12pm.
                     $startTime = $faker->dateTimeBetween('08:00:00', '12:00:00');
                     $startTime = Carbon::instance($startTime)->setDate(
                         $startDate->year,
@@ -40,12 +48,16 @@ class ShiftsTableSeeder extends Seeder
                         $startDate->day
                     );
 
-                    // Hora de finalización basada en las horas trabajadas.
+                    // Calculate end time based on shift hours.
                     $endTime = (clone $startTime)->addHours((int)$hours)->addMinutes(($hours - (int)$hours) * 60);
 
-                    // Insertar el turno en la base de datos.
+                    // Generate random location within Adelaide bounds.
+                    $locationLat = $faker->randomFloat(8, $adelaideBounds['min_lat'], $adelaideBounds['max_lat']);
+                    $locationLng = $faker->randomFloat(8, $adelaideBounds['min_lng'], $adelaideBounds['max_lng']);
+
+                    // Insert the shift into the database.
                     DB::table('shifts')->insert([
-                        'shift_type_id' => 1, // Puedes ajustar según tu lógica.
+                        'shift_type_id' => 1, // Adjust according to your logic.
                         'employee_id' => $employeeId,
                         'date_start' => $startTime,
                         'date_end' => $endTime,
@@ -54,11 +66,13 @@ class ShiftsTableSeeder extends Seeder
                         'comments' => $faker->sentence(),
                         'replacement_id' => null,
                         'created_at' => now(),
+                        'location_lat' => $locationLat, // Added field
+                        'location_lng' => $locationLng, // Added field
                     ]);
                 }
             }
 
-            // Incrementar al siguiente día.
+            // Increment to the next day.
             $startDate->addDay();
         }
     }

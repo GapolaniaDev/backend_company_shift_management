@@ -17,6 +17,7 @@ Route::middleware('auth:api')->controller(DashboardController::class)->group(fun
 
 Route::middleware('auth:api')->controller(ShiftController::class)->group(function () {
     Route::get('/shifts', 'index');
+    ROute::get('/shifts/today', 'getTodayShift');
 });
 
 Route::middleware('auth:api')->controller(ShiftGenerationController::class)->group(function () {
