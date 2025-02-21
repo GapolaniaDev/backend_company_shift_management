@@ -15,7 +15,7 @@ class ShiftsTableSeeder extends Seeder
         $faker = Faker::create();
 
         // Range of employees.
-        $employees = range(1, 11);
+        $employees = range(1, 13);
 
         // Working days: Monday (1) to Friday (5).
         $workDays = [1, 2, 3, 4, 5];

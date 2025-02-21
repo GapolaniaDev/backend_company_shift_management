@@ -63,14 +63,16 @@ class ShiftController extends Controller
 
     public function getTodayShift(Request $request)
     {
-        // Obtener al usuario autenticado
+        // Obtener el usuario autenticado
         $user = $request->user();
 
         // Fecha de hoy
         $today = Carbon::now()->toDateString();
 
-        // Buscar el turno del usuario para hoy
-        $shift = Shift::where('employee_id', $user->id)
+        // Buscar el turno del empleado usando el correo del usuario
+        $shift = Shift::whereHas('employee', function ($query) use ($user) {
+            $query->where('email', $user->email); // Filtro por el correo electrónico
+        })
             ->whereDate('date_start', '<=', $today)
             ->whereDate('date_end', '>=', $today)
             ->first();
