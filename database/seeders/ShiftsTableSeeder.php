@@ -15,10 +15,10 @@ class ShiftsTableSeeder extends Seeder
         $faker = Faker::create();
 
         // Range of employees.
-        $employees = range(1, 13);
+        $employees = range(1, 11);
 
         // Working days: Monday (1) to Friday (5).
-        $workDays = [1, 2, 3, 4, 5];
+        $workDays = [1, 2, 3, 4, 5, 6, 7];
 
         // Start and end dates.
         $startDate = Carbon::create(2025, 1, 1);
@@ -52,8 +52,8 @@ class ShiftsTableSeeder extends Seeder
                     $endTime = (clone $startTime)->addHours((int)$hours)->addMinutes(($hours - (int)$hours) * 60);
 
                     // Generate random location within Adelaide bounds.
-                    $locationLat = $faker->randomFloat(8, $adelaideBounds['min_lat'], $adelaideBounds['max_lat']);
-                    $locationLng = $faker->randomFloat(8, $adelaideBounds['min_lng'], $adelaideBounds['max_lng']);
+                    $locationLat = $faker->randomFloat(15, $adelaideBounds['min_lat'], $adelaideBounds['max_lat']);
+                    $locationLng = $faker->randomFloat(15, $adelaideBounds['min_lng'], $adelaideBounds['max_lng']);
 
                     // Insert the shift into the database.
                     DB::table('shifts')->insert([

@@ -15,16 +15,16 @@ class AddLocationToShiftsTable extends Migration
     {
         Schema::table('shifts', function (Blueprint $table) {
             // Shift location in Google Maps
-            $table->decimal('location_lat', 10, 8)->nullable()->comment('Latitude of the shift location in Google Maps');
-            $table->decimal('location_lng', 11, 8)->nullable()->comment('Longitude of the shift location in Google Maps');
+            $table->decimal('location_lat', 18, 15)->nullable()->comment('Latitude of the shift location in Google Maps');
+            $table->decimal('location_lng', 18, 15)->nullable()->comment('Longitude of the shift location in Google Maps');
 
             // Clock On location
-            $table->decimal('clock_on_lat', 10, 8)->nullable()->comment('Latitude where the user performed Clock On');
-            $table->decimal('clock_on_lng', 11, 8)->nullable()->comment('Longitude where the user performed Clock On');
+            $table->decimal('clock_on_lat', 18, 15)->nullable()->comment('Latitude where the user performed Clock On');
+            $table->decimal('clock_on_lng', 18, 15)->nullable()->comment('Longitude where the user performed Clock On');
 
             // Clock Off location
-            $table->decimal('clock_off_lat', 10, 8)->nullable()->comment('Latitude where the user performed Clock Off');
-            $table->decimal('clock_off_lng', 11, 8)->nullable()->comment('Longitude where the user performed Clock Off');
+            $table->decimal('clock_off_lat', 18, 15)->nullable()->comment('Latitude where the user performed Clock Off');
+            $table->decimal('clock_off_lng', 18, 15)->nullable()->comment('Longitude where the user performed Clock Off');
         });
     }
 
