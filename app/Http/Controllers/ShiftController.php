@@ -8,7 +8,6 @@ use App\Models\Shift;
 
 class ShiftController extends Controller
 {
-    // Las paletas de colores
     private $colorPalettes = [
         'full' => ['1D5A73', '54B5BF', '1F8C45', '97BF41', 'F2E422'],
         'bright' => ['1F8C45', '97BF41', 'F2E422', 'F2F2F2', '0D0D0D'],
@@ -19,13 +18,12 @@ class ShiftController extends Controller
     ];
 
     private $backgroundColors = [
-        'E6F1F5', // Azul claro
-        'C2D4D9', // Gris azulado
-        'C7E4CE', // Verde claro
-        'EAF4DC', // Amarillo claro
-        'F2F2F2', // Gris muy claro
+        'E6F1F5',
+        'C2D4D9',
+        'C7E4CE',
+        'EAF4DC',
+        'F2F2F2',
     ];
-
 
     /**
      * Display a listing of the resource.
@@ -33,8 +31,6 @@ class ShiftController extends Controller
     public function index()
     {
         $today = Carbon::today();
-        /*$date = '2024-09-16';
-        $today = new Carbon($date);*/
 
         $shifts = Shift::with('employee')
             ->where('date_start', '<=', $today->endOfDay())
@@ -60,24 +56,19 @@ class ShiftController extends Controller
         return response()->json($formattedShifts);
     }
 
-
     public function getTodayShift(Request $request)
     {
-        // Obtener el usuario autenticado
         $user = $request->user();
 
-        // Fecha de hoy
         $today = Carbon::now()->toDateString();
 
-        // Buscar el turno del empleado usando el correo del usuario
         $shift = Shift::whereHas('employee', function ($query) use ($user) {
-            $query->where('email', $user->email); // Filtro por el correo electrónico
+            $query->where('email', $user->email);
         })
             ->whereDate('date_start', '<=', $today)
             ->whereDate('date_end', '>=', $today)
             ->first();
 
-        // Verificar si se encontró un turno
         if ($shift) {
             return response()->json([
                 'success' => true,
@@ -120,5 +111,51 @@ class ShiftController extends Controller
         return $this->backgroundColors[$index];
     }
 
+    public function updateClock(Request $request, $shiftId)
+    {
+        $request->validate([
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+            'type' => 'required|in:clock_on,clock_off',
+        ]);
+
+        $shift = Shift::findOrFail($shiftId); // Buscar el turno
+        $user = $request->user(); // Usar el usuario autenticado
+
+        // Validar que el turno pertenece al usuario (según tu lógica)
+        if ($shift->employee_id !== $user->id) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        // Verificar radio
+        if (!$shift->isWithinRadius($request->lat, $request->lng)) {
+            return response()->json(['error' => 'You are outside the allowed radius'], 422);
+        }
+
+        // Actualizar según el tipo
+        if ($request->type === 'clock_on') {
+            if ($shift->clock_off_time) {
+                return response()->json(['error' => 'Clock on cannot be updated after clock off'], 422);
+            }
+
+            $shift->update([
+                'clock_on_lat' => $request->lat,
+                'clock_on_lng' => $request->lng,
+                'clock_on_time' => now(),
+            ]);
+        } else {
+            if (!$shift->clock_on_time) {
+                return response()->json(['error' => 'Clock off cannot happen before clock on'], 422);
+            }
+
+            $shift->update([
+                'clock_off_lat' => $request->lat,
+                'clock_off_lng' => $request->lng,
+                'clock_off_time' => now(),
+            ]);
+        }
+
+        return response()->json(['success' => true, 'message' => 'Coordinates updated successfully.']);
+    }
 
 }
