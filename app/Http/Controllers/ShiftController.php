@@ -111,7 +111,7 @@ class ShiftController extends Controller
         return $this->backgroundColors[$index];
     }
 
-    public function updateClock(Request $request, $shiftId)
+    public function updateClock(Request $request, $shiftId = null)
     {
         $request->validate([
             'lat' => 'required|numeric',
@@ -119,20 +119,16 @@ class ShiftController extends Controller
             'type' => 'required|in:clock_on,clock_off',
         ]);
 
-        $shift = Shift::findOrFail($shiftId); // Buscar el turno
-        $user = $request->user(); // Usar el usuario autenticado
+        $shift = Shift::findOrFail($shiftId);
+        $user = $request->user();
 
-        // Validar que el turno pertenece al usuario (según tu lógica)
         if ($shift->employee_id !== $user->id) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
-
-        // Verificar radio
         if (!$shift->isWithinRadius($request->lat, $request->lng)) {
             return response()->json(['error' => 'You are outside the allowed radius'], 422);
         }
 
-        // Actualizar según el tipo
         if ($request->type === 'clock_on') {
             if ($shift->clock_off_time) {
                 return response()->json(['error' => 'Clock on cannot be updated after clock off'], 422);

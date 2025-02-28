@@ -10,6 +10,7 @@ use App\Http\Controllers\ShiftController;
 
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
+//Route::put('/shifts/{id}/update-clock', [ShiftController::class, 'updateClock']);
 
 Route::middleware('auth:api')->controller(DashboardController::class)->group(function () {
     Route::get('/employees', 'index');
@@ -19,7 +20,6 @@ Route::middleware('auth:api')->controller(ShiftController::class)->group(functio
     Route::get('/shifts', 'index');
     Route::get('/shifts/today', 'getTodayShift');
     Route::put('/shifts/{id}/update-clock', 'updateClock');
-
 });
 
 Route::middleware('auth:api')->controller(ShiftGenerationController::class)->group(function () {

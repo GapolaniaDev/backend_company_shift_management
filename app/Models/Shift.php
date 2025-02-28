@@ -86,10 +86,6 @@ class Shift extends Model
      */
     public function isWithinRadius($userLat, $userLng)
     {
-        echo json_encode([$userLat,
-            $userLng,
-            $this->location_lat,
-            $this->location_lng]);
         $distance = $this->calculateDistance(
             $userLat,
             $userLng,
