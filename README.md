@@ -1,66 +1,126 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Shift Management System - Backend
 
 <p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
+  <img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo">
 </p>
 
-## About Laravel
+## Overview
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+This is the backend API for the Shift Management System, built with Laravel. The system allows businesses to manage employee work schedules, track clock-in/clock-out with location validation, and automatically generate shifts based on predefined configurations.
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Key Features
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+- **Role-based Access Control**: Three user roles (admin, supervisor, employee) with different permission levels
+- **Employee Management**: Comprehensive employee data including personal and financial information
+- **Shift Configuration**: Customizable shift types and employee-specific shift settings
+- **Shift Generation**: Automatic shift creation based on templates and configurations
+- **Clock In/Out System**: Location-aware time tracking with geofencing
+- **API Documentation**: Complete Swagger/OpenAPI documentation
+- **Secure Authentication**: JWT-based authentication with Laravel Passport
 
-## Learning Laravel
+## System Architecture
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Models
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+- **User**: Authentication and role management
+- **Employee**: Employee data with hierarchical supervisor relationships
+- **ShiftType**: Shift templates with weekly schedules
+- **ShiftConfiguration**: Employee-specific shift settings
+- **Shift**: Individual work shifts with schedule and location data
+- **PayPeriod**: Pay period definitions for payroll processing
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### API Endpoints
 
-## Laravel Sponsors
+The API is organized into the following categories:
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+- **Authentication**: Login, logout, token refresh
+- **Employees**: Employee CRUD operations
+- **ShiftTypes**: Shift template management
+- **ShiftConfigurations**: Employee shift settings
+- **Shifts**: Shift management including clock in/out functionality
+- **ShiftGeneration**: Automated shift creation tools
+- **Dashboard**: Data aggregation for reporting
 
-### Premium Partners
+## Technology Stack
 
-- **[Vehikl](https://vehikl.com/)**
-- **[Tighten Co.](https://tighten.co)**
-- **[WebReinvent](https://webreinvent.com/)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel/)**
-- **[Cyber-Duck](https://cyber-duck.co.uk)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Jump24](https://jump24.co.uk)**
-- **[Redberry](https://redberry.international/laravel/)**
-- **[Active Logic](https://activelogic.com)**
-- **[byte5](https://byte5.de)**
-- **[OP.GG](https://op.gg)**
+- **Framework**: Laravel 10
+- **Authentication**: Laravel Passport (OAuth2)
+- **Documentation**: L5-Swagger / OpenAPI
+- **Database**: MySQL
+- **Infrastructure**: Docker, Nginx
+- **Security**: SSL/TLS, CSRF protection
 
-## Contributing
+## Getting Started
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Prerequisites
 
-## Code of Conduct
+- Docker and Docker Compose
+- Composer
+- PHP 8.2+
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+### Installation
 
-## Security Vulnerabilities
+1. Clone the repository:
+   ```
+   git clone <repository-url>
+   cd shift_management_docker/backend
+   ```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+2. Install dependencies:
+   ```
+   composer install
+   ```
+
+3. Configure environment:
+   ```
+   cp env .env
+   ```
+
+4. Generate application key:
+   ```
+   php artisan key:generate
+   ```
+
+5. Generate Passport keys:
+   ```
+   php artisan passport:install
+   ```
+
+6. Run migrations and seeders:
+   ```
+   php artisan migrate
+   php artisan db:seed
+   ```
+
+7. Start the Docker containers:
+   ```
+   docker-compose up -d
+   ```
+
+### API Documentation
+
+Once the application is running, access the Swagger documentation at:
+
+```
+https://localhost/api/documentation
+```
+
+## Development
+
+### Generating API Documentation
+
+To regenerate the Swagger/OpenAPI documentation after making changes:
+
+```
+php artisan l5-swagger:generate
+```
+
+### Running Tests
+
+```
+php artisan test
+```
 
 ## License
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+This project is licensed under the [MIT license](https://opensource.org/licenses/MIT).
