@@ -6,99 +6,125 @@ use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ShiftGenerationController;
 use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\ShiftTypeController;
+use App\Http\Controllers\ShiftConfigurationController;
+use App\Http\Controllers\PayPeriodController;
 
+/*
+|--------------------------------------------------------------------------
+| API Routes
+|--------------------------------------------------------------------------
+*/
 
+// Public routes
 Route::post('/register', [AuthController::class, 'register']);
 Route::post('/login', [AuthController::class, 'login']);
 
-Route::middleware('auth:api')->controller(DashboardController::class)->group(function () {
-    Route::get('/employees', 'index');
+// Authentication routes
+Route::middleware('auth:api')->group(function () {
+    Route::get('/user', [AuthController::class, 'me']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
 });
 
-Route::middleware('auth:api')->controller(ShiftController::class)->group(function () {
-    Route::get('/shifts', 'index');
+// Employee routes - Role restricted
+Route::middleware(['auth:api'])->prefix('employees')->group(function () {
+    // Employee can only access their own data
+    Route::get('/me', [EmployeeController::class, 'me']);
+    
+    // Supervisor can access their employees
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/', [EmployeeController::class, 'index']);
+        Route::get('/supervisees', [EmployeeController::class, 'supervisees']);
+    });
+    
+    // Admin can do everything
+    Route::middleware(['role:admin'])->group(function () {
+        Route::post('/', [EmployeeController::class, 'store']);
+        Route::get('/{id}', [EmployeeController::class, 'show']);
+        Route::put('/{id}', [EmployeeController::class, 'update']);
+        Route::delete('/{id}', [EmployeeController::class, 'destroy']);
+        Route::post('/{id}/assign-supervisor', [EmployeeController::class, 'assignSupervisor']);
+    });
 });
 
-Route::middleware('auth:api')->controller(ShiftGenerationController::class)->group(function () {
-    Route::get('/generateNextFortnightShifts', 'generateNextFortnightShifts');
+// Shift routes with role-based access
+Route::middleware(['auth:api'])->prefix('shifts')->group(function () {
+    // Routes available to all authenticated users
+    Route::get('/today', [ShiftController::class, 'getTodayShift']);
+    Route::put('/{id}/update-clock', [ShiftController::class, 'updateClock']);
+    
+    // Employee routes - restricted to their own shifts
+    Route::get('/my-shifts', [ShiftController::class, 'myShifts']);
+    
+    // Supervisor routes
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/', [ShiftController::class, 'index']);
+        Route::get('/team', [ShiftController::class, 'teamShifts']);
+    });
+    
+    // Admin routes
+    Route::middleware(['role:admin'])->group(function () {
+        Route::post('/', [ShiftController::class, 'store']);
+        Route::get('/{id}', [ShiftController::class, 'show']);
+        Route::put('/{id}', [ShiftController::class, 'update']);
+        Route::delete('/{id}', [ShiftController::class, 'destroy']);
+    });
 });
 
-Route::get('/test', function (Request $request) {
-    return response()->json([
-        'message' => 'Ruta de prueba funcionando correctamente',
-        'timestamp' => now()
-    ]);
+// ShiftType routes - mostly admin only
+Route::middleware(['auth:api', 'role:admin'])->prefix('shift-types')->group(function () {
+    Route::get('/', [ShiftTypeController::class, 'index']);
+    Route::post('/', [ShiftTypeController::class, 'store']);
+    Route::get('/{id}', [ShiftTypeController::class, 'show']);
+    Route::put('/{id}', [ShiftTypeController::class, 'update']);
+    Route::delete('/{id}', [ShiftTypeController::class, 'destroy']);
 });
 
-Route::middleware('auth:api')->get('/data', function () {
-    return [
-        [
-            "nombre" => "Juan Pérez",
-            "edad" => 30,
-            "email" => "juan.perez@example.com",
-            "telefono" => "123-456-7890",
-            "direccion" => "Calle Falsa 123, Ciudad Ejemplo"
-        ],
-        [
-            "nombre" => "María García",
-            "edad" => 25,
-            "email" => "maria.garcia@example.com",
-            "telefono" => "321-654-0987",
-            "direccion" => "Avenida Siempre Viva 742, Ciudad Demo"
-        ],
-        [
-            "nombre" => "Carlos Hernández",
-            "edad" => 35,
-            "email" => "carlos.hernandez@example.com",
-            "telefono" => "987-654-3210",
-            "direccion" => "Boulevard del Sol 456, Municipio Prueba"
-        ],
-        [
-            "nombre" => "Ana López",
-            "edad" => 28,
-            "email" => "ana.lopez@example.com",
-            "telefono" => "456-789-1230",
-            "direccion" => "Calle de la Luna 789, Villa Test"
-        ],
-        [
-            "nombre" => "Pedro Martínez",
-            "edad" => 40,
-            "email" => "pedro.martinez@example.com",
-            "telefono" => "789-012-3456",
-            "direccion" => "Calle del Arco 321, Pueblo Ejemplo"
-        ],
-        [
-            'Monday' => [
-                'date_start' => date('Y-m-d 00:00:00', strtotime('Monday')),
-                'date_finish' => date('Y-m-d 23:59:59', strtotime('Monday')),
-            ],
-            'Tuesday' => [
-                'date_start' => date('Y-m-d 00:00:00', strtotime('Tuesday')),
-                'date_finish' => date('Y-m-d 23:59:59', strtotime('Tuesday')),
-            ],
-            'Wednesday' => [
-                'date_start' => date('Y-m-d 00:00:00', strtotime('Wednesday')),
-                'date_finish' => date('Y-m-d 23:59:59', strtotime('Wednesday')),
-            ],
-            'Thursday' => [
-                'date_start' => date('Y-m-d 00:00:00', strtotime('Thursday')),
-                'date_finish' => date('Y-m-d 23:59:59', strtotime('Thursday')),
-            ],
-            'Friday' => [
-                'date_start' => date('Y-m-d 00:00:00', strtotime('Friday')),
-                'date_finish' => date('Y-m-d 23:59:59', strtotime('Friday')),
-            ],
-            'Saturday' => [
-                'date_start' => date('Y-m-d 00:00:00', strtotime('Saturday')),
-                'date_finish' => date('Y-m-d 23:59:59', strtotime('Saturday')),
-            ],
-            'Sunday' => [
-                'date_start' => date('Y-m-d 00:00:00', strtotime('Sunday')),
-                'date_finish' => date('Y-m-d 23:59:59', strtotime('Sunday')),
-            ],
-        ]
-    ];
+// ShiftConfiguration routes with role-based access
+Route::middleware(['auth:api'])->prefix('shift-configurations')->group(function () {
+    // Admin can do everything
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/', [ShiftConfigurationController::class, 'index']);
+        Route::post('/', [ShiftConfigurationController::class, 'store']);
+        Route::get('/{id}', [ShiftConfigurationController::class, 'show']);
+        Route::put('/{id}', [ShiftConfigurationController::class, 'update']);
+        Route::delete('/{id}', [ShiftConfigurationController::class, 'destroy']);
+    });
+    
+    // Supervisors can view and modify their team's configurations
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/team', [ShiftConfigurationController::class, 'teamConfigurations']);
+    });
+    
+    // Employees can only see their own
+    Route::get('/my-configurations', [ShiftConfigurationController::class, 'myConfigurations']);
 });
 
-Route::middleware('auth:api')->get('/user', [AuthController::class, 'me']);
-Route::middleware('auth:api')->post('/logout', [AuthController::class, 'logout']);
+// PayPeriod routes - Admin only
+Route::middleware(['auth:api', 'role:admin'])->prefix('pay-periods')->group(function () {
+    Route::get('/', [PayPeriodController::class, 'index']);
+    Route::post('/', [PayPeriodController::class, 'store']);
+    Route::get('/{id}', [PayPeriodController::class, 'show']);
+    Route::put('/{id}', [PayPeriodController::class, 'update']);
+    Route::delete('/{id}', [PayPeriodController::class, 'destroy']);
+});
+
+// Dashboard routes with role-based restrictions
+Route::middleware(['auth:api'])->group(function () {
+    Route::get('/dashboard/employee', [DashboardController::class, 'employeeDashboard']);
+    
+    Route::middleware(['role:admin,supervisor'])->group(function () {
+        Route::get('/dashboard/supervisor', [DashboardController::class, 'supervisorDashboard']);
+    });
+    
+    Route::middleware(['role:admin'])->group(function () {
+        Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard']);
+    });
+});
+
+// Shift generation - admin and supervisor
+Route::middleware(['auth:api', 'role:admin,supervisor'])->group(function () {
+    Route::get('/generate-next-fortnight-shifts', [ShiftGenerationController::class, 'generateNextFortnightShifts']);
+});

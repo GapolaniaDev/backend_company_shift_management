@@ -59,4 +59,14 @@ return [
         'secret' => env('PASSPORT_PERSONAL_ACCESS_CLIENT_SECRET'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Passport Token Lifetime
+    |--------------------------------------------------------------------------
+    */
+    'token_lifetime' => [
+        'access' => env('PASSPORT_ACCESS_TOKEN_LIFETIME', 60), // 1 hour in minutes by default
+        'refresh' => env('PASSPORT_REFRESH_TOKEN_LIFETIME', 30 * 24 * 60), // 30 days in minutes
+    ],
+
 ];
