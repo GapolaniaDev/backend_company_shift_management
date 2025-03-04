@@ -38,18 +38,144 @@ class ShiftController extends ApiController
     /**
      * @OA\Get(
      *     path="/api/shifts",
-     *     summary="List shifts",
-     *     description="Returns a paginated list of shifts with filtering and sorting options",
-     *     operationId="listShifts",
+     *     summary="List all shifts",
+     *     description="Returns a paginated list of all shifts. Access is controlled by role: admins see all shifts, supervisors see only their team's shifts, employees can't access this endpoint.",
+     *     operationId="listAllShifts",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
-     *         name="employee_id",
+     *         name="date_from",
      *         in="query",
-     *         description="Filter by employee ID",
+     *         description="Start date (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="date_to",
+     *         in="query",
+     *         description="End date (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="shift_type_id",
+     *         in="query",
+     *         description="Filter by shift type ID",
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Field to sort by",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"date_start", "date_end", "created_at", "total_hours"}, default="date_start")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_dir",
+     *         in="query",
+     *         description="Sort direction",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of shifts for the authenticated user",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="employee_id", type="integer", example=1),
+     *                 @OA\Property(property="shift_type_id", type="integer", example=2),
+     *                 @OA\Property(property="date_start", type="string", format="date-time"),
+     *                 @OA\Property(property="date_end", type="string", format="date-time"),
+     *                 @OA\Property(property="total_hours", type="number", format="float", example=8.5),
+     *                 @OA\Property(property="location", type="string", example="Head Office"),
+     *                 @OA\Property(property="clock_on_time", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(
+     *                     property="shift_type",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Morning Shift")
+     *                 )
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function index(Request $request)
+    {
+        [$page, $pageSize] = $this->getPageParams($request);
+
+        $query = Shift::with('employee', 'shiftType');
+
+        // Search/filter options
+        if ($request->has('employee_id')) {
+            $query->where('employee_id', $request->input('employee_id'));
+        }
+
+        if ($request->has('date_from')) {
+            $query->where('date_start', '>=', Carbon::parse($request->input('date_from'))->startOfDay());
+        }
+
+        if ($request->has('date_to')) {
+            $query->where('date_end', '<=', Carbon::parse($request->input('date_to'))->endOfDay());
+        }
+
+        if ($request->has('shift_type_id')) {
+            $query->where('shift_type_id', $request->input('shift_type_id'));
+        }
+
+        // Role-based access control
+        $user = $request->user();
+
+        if ($user->isSupervisor()) {
+            // Supervisor can only see their team's shifts
+            $employee = $user->employee;
+            if ($employee) {
+                $superviseeIds = Employee::where('supervisor_id', $employee->id)->pluck('id')->toArray();
+                $query->whereIn('employee_id', $superviseeIds);
+            } else {
+                return $this->errorResponse('Supervisor account is not linked to an employee profile.', 400);
+            }
+        }
+
+        // Sort
+        $sortBy = $request->input('sort_by', 'date_start');
+        $sortDir = $request->input('sort_dir', 'desc');
+        $allowedSortFields = ['date_start', 'date_end', 'created_at', 'total_hours'];
+
+        if (in_array($sortBy, $allowedSortFields)) {
+            $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
+        }
+
+        $shifts = $query->paginate($pageSize, ['*'], 'page', $page);
+
+        // Format shifts with the profile image data
+        $shifts->getCollection()->transform(function ($shift) {
+            $shift->image_profile = $this->generateProfileTextAndColor(
+                $shift->employee->first_name,
+                $shift->employee->last_name
+            );
+            return $shift;
+        });
+
+        return $this->paginatedResponse($shifts);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/shifts/my-shifts",
+     *     summary="Get current user's shifts only",
+     *     description="Returns a paginated list of shifts assigned to the authenticated user only. This endpoint is specifically for employees to view their own shifts.",
+     *     operationId="getMyShifts",
+     *     tags={"Shifts"},
+     *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
@@ -85,23 +211,9 @@ class ShiftController extends ApiController
      *         required=false,
      *         @OA\Schema(type="integer", default=15)
      *     ),
-     *     @OA\Parameter(
-     *         name="sort_by",
-     *         in="query",
-     *         description="Field to sort by",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"date_start", "date_end", "created_at", "total_hours"}, default="date_start")
-     *     ),
-     *     @OA\Parameter(
-     *         name="sort_dir",
-     *         in="query",
-     *         description="Sort direction",
-     *         required=false,
-     *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc")
-     *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista paginada de turnos",
+     *         description="Paginated list of user's shifts",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array", @OA\Items(
@@ -111,209 +223,214 @@ class ShiftController extends ApiController
      *                 @OA\Property(property="date_start", type="string", format="date-time"),
      *                 @OA\Property(property="date_end", type="string", format="date-time"),
      *                 @OA\Property(property="total_hours", type="number", format="float", example=8.5),
-     *                 @OA\Property(property="location", type="string", example="Oficina Central"),
+     *                 @OA\Property(property="location", type="string", example="Head Office"),
      *                 @OA\Property(property="clock_on_time", type="string", format="date-time", nullable=true),
      *                 @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
      *                 @OA\Property(
-     *                     property="employee",
-     *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="first_name", type="string", example="Juan"),
-     *                     @OA\Property(property="last_name", type="string", example="Pérez")
-     *                 ),
-     *                 @OA\Property(
      *                     property="shift_type",
      *                     type="object",
-     *                     @OA\Property(property="id", type="integer", example=2),
-     *                     @OA\Property(property="name", type="string", example="Turno Tarde")
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Morning Shift")
      *                 ),
      *                 @OA\Property(
      *                     property="image_profile",
      *                     type="object",
-     *                     @OA\Property(property="text_profile", type="string", example="JP"),
+     *                     @OA\Property(property="text_profile", type="string", example="JS"),
      *                     @OA\Property(property="text_color", type="string", example="1D5A73"),
      *                     @OA\Property(property="background_color", type="string", example="E6F1F5")
      *                 )
      *             )),
-     *             @OA\Property(property="pagination", type="object")
+     *             @OA\Property(
+     *                 property="pagination",
+     *                 type="object",
+     *                 @OA\Property(property="total", type="integer", example=10),
+     *                 @OA\Property(property="count", type="integer", example=10),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="total_pages", type="integer", example=1)
+     *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="No autenticado"
+     *         description="Unauthenticated"
      *     ),
      *     @OA\Response(
-     *         response=403,
-     *         description="Prohibido - No tiene permisos"
-     *     ),
-     *     @OA\Response(
-     *         response=400,
-     *         description="Error de solicitud",
+     *         response=404,
+     *         description="User has no employee profile",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Supervisor account is not linked to an employee profile.")
+     *             @OA\Property(property="message", type="string", example="Your user account is not linked to an employee profile.")
      *         )
      *     )
      * )
-     */
-    public function index(Request $request)
-    {
-        [$page, $pageSize] = $this->getPageParams($request);
-        
-        $query = Shift::with('employee', 'shiftType');
-        
-        // Search/filter options
-        if ($request->has('employee_id')) {
-            $query->where('employee_id', $request->input('employee_id'));
-        }
-        
-        if ($request->has('date_from')) {
-            $query->where('date_start', '>=', Carbon::parse($request->input('date_from'))->startOfDay());
-        }
-        
-        if ($request->has('date_to')) {
-            $query->where('date_end', '<=', Carbon::parse($request->input('date_to'))->endOfDay());
-        }
-        
-        if ($request->has('shift_type_id')) {
-            $query->where('shift_type_id', $request->input('shift_type_id'));
-        }
-        
-        // Role-based access control
-        $user = $request->user();
-        
-        if ($user->isSupervisor()) {
-            // Supervisor can only see their team's shifts
-            $employee = $user->employee;
-            if ($employee) {
-                $superviseeIds = Employee::where('supervisor_id', $employee->id)->pluck('id')->toArray();
-                $query->whereIn('employee_id', $superviseeIds);
-            } else {
-                return $this->errorResponse('Supervisor account is not linked to an employee profile.', 400);
-            }
-        }
-        
-        // Sort
-        $sortBy = $request->input('sort_by', 'date_start');
-        $sortDir = $request->input('sort_dir', 'desc');
-        $allowedSortFields = ['date_start', 'date_end', 'created_at', 'total_hours'];
-        
-        if (in_array($sortBy, $allowedSortFields)) {
-            $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
-        }
-        
-        $shifts = $query->paginate($pageSize, ['*'], 'page', $page);
-        
-        // Format shifts with the profile image data
-        $shifts->getCollection()->transform(function ($shift) {
-            $shift->image_profile = $this->generateProfileTextAndColor(
-                $shift->employee->first_name, 
-                $shift->employee->last_name
-            );
-            return $shift;
-        });
-        
-        return $this->paginatedResponse($shifts);
-    }
-    
-    /**
-     * Get shifts for the current employee
      */
     public function myShifts(Request $request)
     {
         $user = $request->user();
         $employee = $user->employee;
-        
+
         if (!$employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
         }
-        
+
         [$page, $pageSize] = $this->getPageParams($request);
-        
+
         $query = Shift::with('shiftType')
             ->where('employee_id', $employee->id);
-            
+
         // Date filters
         if ($request->has('date_from')) {
             $query->where('date_start', '>=', Carbon::parse($request->input('date_from'))->startOfDay());
         }
-        
+
         if ($request->has('date_to')) {
             $query->where('date_end', '<=', Carbon::parse($request->input('date_to'))->endOfDay());
         }
-        
+
         $shifts = $query->orderBy('date_start', 'desc')
             ->paginate($pageSize, ['*'], 'page', $page);
-        
+
         // Add profile image data
         $shifts->getCollection()->transform(function ($shift) use ($employee) {
             $shift->image_profile = $this->generateProfileTextAndColor(
-                $employee->first_name, 
+                $employee->first_name,
                 $employee->last_name
             );
             return $shift;
         });
-        
+
         return $this->paginatedResponse($shifts);
     }
-    
+
     /**
-     * Get shifts for the supervisor's team
+     * @OA\Get(
+     *     path="/api/shifts/team",
+     *     summary="Team shifts",
+     *     description="Retrieves the shifts assigned to the employees supervised by the current user (supervisor or administrator).",
+     *     operationId="getTeamShifts",
+     *     tags={"Shifts"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of team shifts",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="employee_id", type="integer", example=5),
+     *                 @OA\Property(property="shift_type_id", type="integer", example=3),
+     *                 @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-13T09:00:00Z"),
+     *                 @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-13T17:00:00Z"),
+     *                 @OA\Property(property="location", type="string", example="Branch A")
+     *             ))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     )
+     * )
      */
     public function teamShifts(Request $request)
     {
         $user = $request->user();
         $employee = $user->employee;
-        
+
         if (!$employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 400);
         }
-        
+
         [$page, $pageSize] = $this->getPageParams($request);
-        
+
         // Get all supervisees
         $superviseeIds = Employee::where('supervisor_id', $employee->id)
             ->pluck('id')
             ->toArray();
-            
+
         if (empty($superviseeIds)) {
             return $this->successResponse([], 'No team members found.');
         }
-        
+
         $query = Shift::with(['employee', 'shiftType'])
             ->whereIn('employee_id', $superviseeIds);
-            
+
         // Date filters
         if ($request->has('date_from')) {
             $query->where('date_start', '>=', Carbon::parse($request->input('date_from'))->startOfDay());
         }
-        
+
         if ($request->has('date_to')) {
             $query->where('date_end', '<=', Carbon::parse($request->input('date_to'))->endOfDay());
         }
-        
+
         // Employee filter
         if ($request->has('employee_id') && in_array($request->input('employee_id'), $superviseeIds)) {
             $query->where('employee_id', $request->input('employee_id'));
         }
-        
+
         $shifts = $query->orderBy('date_start', 'desc')
             ->paginate($pageSize, ['*'], 'page', $page);
-        
+
         // Add profile image data
         $shifts->getCollection()->transform(function ($shift) {
             $shift->image_profile = $this->generateProfileTextAndColor(
-                $shift->employee->first_name, 
+                $shift->employee->first_name,
                 $shift->employee->last_name
             );
             return $shift;
         });
-        
+
         return $this->paginatedResponse($shifts);
     }
 
     /**
-     * Store a new shift.
+     * @OA\Post(
+     *     path="/api/shifts",
+     *     summary="Create a shift",
+     *     description="Creates a new shift in the system.",
+     *     operationId="createShift",
+     *     tags={"Shifts"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="employee_id", type="integer", example=5),
+     *             @OA\Property(property="shift_type_id", type="integer", example=1),
+     *             @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z"),
+     *             @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z"),
+     *             @OA\Property(property="location", type="string", example="Central Office")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Shift successfully created",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="employee_id", type="integer", example=5),
+     *                 @OA\Property(property="shift_type_id", type="integer", example=1),
+     *                 @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z"),
+     *                 @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z"),
+     *                 @OA\Property(property="location", type="string", example="Central Office")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function store(Request $request)
     {
@@ -333,7 +450,7 @@ class ShiftController extends ApiController
 
         try {
             $shift = Shift::create($request->all());
-            
+
             return $this->successResponse($shift, 'Shift created successfully', 201);
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to create shift: ' . $e->getMessage(), 500);
@@ -341,15 +458,52 @@ class ShiftController extends ApiController
     }
 
     /**
-     * Display the specified shift.
+     * @OA\Get(
+     *     path="/api/shifts/{id}",
+     *     summary="Show a shift",
+     *     description="Retrieves the details of a specific shift by its ID.",
+     *     operationId="getShift",
+     *     tags={"Shifts"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Shift ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Shift details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="employee_id", type="integer", example=5),
+     *                 @OA\Property(property="shift_type_id", type="integer", example=3),
+     *                 @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z"),
+     *                 @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z"),
+     *                 @OA\Property(property="location", type="string", example="Central Office")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Shift not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Shift not found")
+     *         )
+     *     )
+     * )
      */
     public function show(string $id, Request $request)
     {
         $shift = Shift::with(['employee', 'shiftType'])->findOrFail($id);
-        
+
         // Role-based access control
         $user = $request->user();
-        
+
         if ($user->isEmployee()) {
             // Employee can only view their own shifts
             $employee = $user->employee;
@@ -368,23 +522,54 @@ class ShiftController extends ApiController
                 return $this->errorResponse('Supervisor account is not linked to an employee profile.', 400);
             }
         }
-        
+
         // Add profile image data
         $shift->image_profile = $this->generateProfileTextAndColor(
-            $shift->employee->first_name, 
+            $shift->employee->first_name,
             $shift->employee->last_name
         );
-        
+
         return $this->successResponse($shift);
     }
 
     /**
-     * Update the specified shift.
+     * @OA\Put(
+     *     path="/api/shifts/{id}",
+     *     summary="Update a shift",
+     *     description="Updates the details of an existing shift.",
+     *     operationId="updateShift",
+     *     tags={"Shifts"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Shift ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="employee_id", type="integer", example=5),
+     *             @OA\Property(property="shift_type_id", type="integer", example=1),
+     *             @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z"),
+     *             @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Shift successfully updated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object")
+     *         )
+     *     )
+     * )
      */
     public function update(Request $request, string $id)
     {
         $shift = Shift::findOrFail($id);
-        
+
         $validator = Validator::make($request->all(), [
             'employee_id' => 'sometimes|required|exists:employees,id',
             'shift_type_id' => 'sometimes|required|exists:shift_types,id',
@@ -401,7 +586,7 @@ class ShiftController extends ApiController
 
         try {
             $shift->update($request->all());
-            
+
             return $this->successResponse($shift, 'Shift updated successfully');
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to update shift: ' . $e->getMessage(), 500);
@@ -409,12 +594,34 @@ class ShiftController extends ApiController
     }
 
     /**
-     * Remove the specified shift.
+     * @OA\Delete(
+     *     path="/api/shifts/{id}",
+     *     summary="Delete a shift",
+     *     description="Deletes a shift from the system by its ID.",
+     *     operationId="deleteShift",
+     *     tags={"Shifts"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Shift ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Shift successfully deleted",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Shift successfully deleted")
+     *         )
+     *     )
+     * )
      */
     public function destroy(string $id)
     {
         $shift = Shift::findOrFail($id);
-        
+
         try {
             $shift->delete();
             return $this->successResponse(null, 'Shift deleted successfully');
@@ -426,14 +633,14 @@ class ShiftController extends ApiController
     /**
      * @OA\Get(
      *     path="/api/shifts/today",
-     *     summary="Obtener turno del día",
-     *     description="Obtiene el turno del día actual para el usuario autenticado",
+     *     summary="Get today's shift",
+     *     description="Retrieves the current day's shift for the authenticated user",
      *     operationId="getTodayShift",
-     *     tags={"Turnos"},
+     *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Response(
      *         response=200,
-     *         description="Turno encontrado",
+     *         description="Shift found",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
@@ -443,14 +650,14 @@ class ShiftController extends ApiController
      *                 @OA\Property(property="date_start", type="string", format="date-time"),
      *                 @OA\Property(property="date_end", type="string", format="date-time"),
      *                 @OA\Property(property="total_hours", type="number", format="float", example=8),
-     *                 @OA\Property(property="location", type="string", example="Oficina Central"),
+     *                 @OA\Property(property="location", type="string", example="Head Office"),
      *                 @OA\Property(property="clock_on_time", type="string", format="date-time", nullable=true),
      *                 @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
      *                 @OA\Property(
      *                     property="shift_type",
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Turno Mañana")
+     *                     @OA\Property(property="name", type="string", example="Morning Shift")
      *                 ),
      *                 @OA\Property(
      *                     property="image_profile",
@@ -464,7 +671,7 @@ class ShiftController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="No hay turno para hoy",
+     *         description="No shift for today",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="No shift found for today")
@@ -472,7 +679,7 @@ class ShiftController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="No autenticado"
+     *         description="Unauthenticated"
      *     )
      * )
      */
@@ -480,7 +687,7 @@ class ShiftController extends ApiController
     {
         $user = $request->user();
         $employee = $user->employee;
-        
+
         if (!$employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
         }
@@ -496,15 +703,152 @@ class ShiftController extends ApiController
         if (!$shift) {
             return $this->errorResponse('No shift found for today', 404);
         }
-        
+
         // Add profile image data
         $shift->image_profile = $this->generateProfileTextAndColor(
-            $employee->first_name, 
+            $employee->first_name,
             $employee->last_name
         );
-        
+
         return $this->successResponse($shift);
     }
+
+
+    /**
+     * @OA\Put(
+     *     path="/api/shifts/{id}/update-clock",
+     *     summary="Register clock in/out",
+     *     description="Registers the clock-in or clock-out time for a shift with location validation",
+     *     operationId="updateClockShift",
+     *     tags={"Shifts"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Shift ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"lat", "lng", "type"},
+     *             @OA\Property(property="lat", type="number", format="float", example=19.4326),
+     *             @OA\Property(property="lng", type="number", format="float", example=-99.1332),
+     *             @OA\Property(property="type", type="string", enum={"clock_on", "clock_off"}, example="clock_on", description="Type of record: clock in or clock out")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successful registration",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Clock in successful"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="clock_on_time", type="string", format="date-time"),
+     *                 @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(property="clock_on_lat", type="number", format="float", example=19.4326),
+     *                 @OA\Property(property="clock_on_lng", type="number", format="float", example=-99.1332),
+     *                 @OA\Property(property="clock_off_lat", type="number", format="float", nullable=true),
+     *                 @OA\Property(property="clock_off_lng", type="number", format="float", nullable=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Shift not found"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Not authorized to modify this shift"
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error"),
+     *             @OA\Property(
+     *                 property="errors",
+     *                 type="object",
+     *                 @OA\Property(property="lat", type="array", @OA\Items(type="string", example="The lat field is required")),
+     *                 @OA\Property(property="type", type="array", @OA\Items(type="string", example="The type must be clock_on or clock_off"))
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function updateClock(Request $request, $id)
+    {
+        $validator = Validator::make($request->all(), [
+            'lat' => 'required|numeric',
+            'lng' => 'required|numeric',
+            'type' => 'required|in:clock_on,clock_off',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse('Validation error', 422, $validator->errors()->toArray());
+        }
+
+        $shift = Shift::findOrFail($id);
+        $user = $request->user();
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
+        }
+
+        // Check if the shift belongs to the employee
+        if ($shift->employee_id !== $employee->id) {
+            return $this->errorResponse('Unauthorized to update this shift', 403);
+        }
+
+        // Check if within the allowed radius
+        if (!$shift->isWithinRadius($request->lat, $request->lng)) {
+            return $this->errorResponse('You are outside the allowed radius for this location', 422);
+        }
+
+        try {
+            DB::beginTransaction();
+
+            if ($request->type === 'clock_on') {
+                if ($shift->clock_off_time) {
+                    return $this->errorResponse('Clock on cannot be updated after clock off', 422);
+                }
+
+                $shift->update([
+                    'clock_on_lat' => $request->lat,
+                    'clock_on_lng' => $request->lng,
+                    'clock_on_time' => now(),
+                ]);
+            } else {
+                if (!$shift->clock_on_time) {
+                    return $this->errorResponse('Clock off cannot happen before clock on', 422);
+                }
+
+                $shift->update([
+                    'clock_off_lat' => $request->lat,
+                    'clock_off_lng' => $request->lng,
+                    'clock_off_time' => now(),
+                ]);
+            }
+
+            DB::commit();
+
+            return $this->successResponse($shift, $request->type === 'clock_on' ? 'Clock in successful' : 'Clock out successful');
+        } catch (\Exception $e) {
+            DB::rollBack();
+            return $this->errorResponse('Failed to update clock status: ' . $e->getMessage(), 500);
+        }
+    }
+
 
     /**
      * Generate profile text and color.
@@ -536,140 +880,5 @@ class ShiftController extends ApiController
         $hashValue = crc32($textProfile);
         $index = $hashValue % count($this->backgroundColors);
         return $this->backgroundColors[$index];
-    }
-
-    /**
-     * @OA\Put(
-     *     path="/api/shifts/{id}/update-clock",
-     *     summary="Registrar entrada/salida",
-     *     description="Registra la hora de entrada o salida de un turno con validación de ubicación",
-     *     operationId="updateClockShift",
-     *     tags={"Turnos"},
-     *     security={{"bearerAuth":{}}},
-     *     @OA\Parameter(
-     *         name="id",
-     *         in="path",
-     *         description="ID del turno",
-     *         required=true,
-     *         @OA\Schema(type="integer")
-     *     ),
-     *     @OA\RequestBody(
-     *         required=true,
-     *         @OA\JsonContent(
-     *             required={"lat", "lng", "type"},
-     *             @OA\Property(property="lat", type="number", format="float", example=19.4326),
-     *             @OA\Property(property="lng", type="number", format="float", example=-99.1332),
-     *             @OA\Property(property="type", type="string", enum={"clock_on", "clock_off"}, example="clock_on", description="Tipo de registro: entrada o salida")
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=200,
-     *         description="Registro exitoso",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="message", type="string", example="Clock in successful"),
-     *             @OA\Property(
-     *                 property="data",
-     *                 type="object",
-     *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="clock_on_time", type="string", format="date-time"),
-     *                 @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
-     *                 @OA\Property(property="clock_on_lat", type="number", format="float", example=19.4326),
-     *                 @OA\Property(property="clock_on_lng", type="number", format="float", example=-99.1332),
-     *                 @OA\Property(property="clock_off_lat", type="number", format="float", nullable=true),
-     *                 @OA\Property(property="clock_off_lng", type="number", format="float", nullable=true)
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=404,
-     *         description="Turno no encontrado"
-     *     ),
-     *     @OA\Response(
-     *         response=403,
-     *         description="No autorizado para modificar este turno"
-     *     ),
-     *     @OA\Response(
-     *         response=422,
-     *         description="Error de validación",
-     *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Validation error"),
-     *             @OA\Property(
-     *                 property="errors",
-     *                 type="object",
-     *                 @OA\Property(property="lat", type="array", @OA\Items(type="string", example="El campo lat es obligatorio")),
-     *                 @OA\Property(property="type", type="array", @OA\Items(type="string", example="El tipo debe ser clock_on o clock_off"))
-     *             )
-     *         )
-     *     ),
-     *     @OA\Response(
-     *         response=401,
-     *         description="No autenticado"
-     *     )
-     * )
-     */
-    public function updateClock(Request $request, $id)
-    {
-        $validator = Validator::make($request->all(), [
-            'lat' => 'required|numeric',
-            'lng' => 'required|numeric',
-            'type' => 'required|in:clock_on,clock_off',
-        ]);
-
-        if ($validator->fails()) {
-            return $this->errorResponse('Validation error', 422, $validator->errors()->toArray());
-        }
-
-        $shift = Shift::findOrFail($id);
-        $user = $request->user();
-        $employee = $user->employee;
-        
-        if (!$employee) {
-            return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
-        }
-        
-        // Check if the shift belongs to the employee
-        if ($shift->employee_id !== $employee->id) {
-            return $this->errorResponse('Unauthorized to update this shift', 403);
-        }
-        
-        // Check if within the allowed radius
-        if (!$shift->isWithinRadius($request->lat, $request->lng)) {
-            return $this->errorResponse('You are outside the allowed radius for this location', 422);
-        }
-
-        try {
-            DB::beginTransaction();
-            
-            if ($request->type === 'clock_on') {
-                if ($shift->clock_off_time) {
-                    return $this->errorResponse('Clock on cannot be updated after clock off', 422);
-                }
-
-                $shift->update([
-                    'clock_on_lat' => $request->lat,
-                    'clock_on_lng' => $request->lng,
-                    'clock_on_time' => now(),
-                ]);
-            } else {
-                if (!$shift->clock_on_time) {
-                    return $this->errorResponse('Clock off cannot happen before clock on', 422);
-                }
-
-                $shift->update([
-                    'clock_off_lat' => $request->lat,
-                    'clock_off_lng' => $request->lng,
-                    'clock_off_time' => now(),
-                ]);
-            }
-            
-            DB::commit();
-            
-            return $this->successResponse($shift, $request->type === 'clock_on' ? 'Clock in successful' : 'Clock out successful');
-        } catch (\Exception $e) {
-            DB::rollBack();
-            return $this->errorResponse('Failed to update clock status: ' . $e->getMessage(), 500);
-        }
     }
 }

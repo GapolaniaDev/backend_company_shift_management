@@ -11,6 +11,12 @@ use DateInterval;
 use DatePeriod;
 use Carbon\Carbon;
 
+/**
+ * @OA\Tag(
+ *     name="Shift Generation",
+ *     description="APIs for generating shift schedules based on configurations."
+ * )
+ */
 class ShiftGenerationController extends Controller
 {
 
@@ -21,6 +27,44 @@ class ShiftGenerationController extends Controller
 
     private $hours;
 
+    /**
+     * @OA\Get(
+     *     path="/generate-next-fortnight-shifts",
+     *     operationId="generateNextFortnightShifts",
+     *     summary="Generate the next fortnight's shifts",
+     *     description="This endpoint generates shifts for the upcoming fortnight based on predefined shift configurations. Restricted to users with the `admin` or `supervisor` roles.",
+     *     tags={"Shift Generation"},
+     *     security={{
+     *         "bearerAuth": {}
+     *     }},
+     *     @OA\Response(
+     *         response=201,
+     *         description="Shifts generated successfully.",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="message",
+     *                 type="string",
+     *                 example="Shift created successfully!"
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized access. Only users with `admin` or `supervisor` roles can access this endpoint."
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="An error occurred while generating shifts.",
+     *         @OA\JsonContent(
+     *             @OA\Property(
+     *                 property="error",
+     *                 type="string",
+     *                 example="Internal Server Error"
+     *             )
+     *         )
+     *     )
+     * )
+     */
     public function generateNextFortnightShifts()
     {
 

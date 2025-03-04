@@ -8,112 +8,287 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * @OA\Tag(
+ *     name="ShiftConfigurations",
+ *     description="Endpoints for managing shift configurations, allowing role-based access for admins, supervisors, and employees."
+ * )
+ */
 class ShiftConfigurationController extends ApiController
 {
     /**
-     * Display a listing of all shift configurations.
+     * @OA\Get(
+     *     path="/api/shift-configurations",
+     *     summary="List all shift configurations",
+     *     description="Retrieves a paginated list of shift configurations. Filtering and sorting options are available.",
+     *     operationId="listShiftConfigurations",
+     *     tags={"ShiftConfigurations"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="employee_id",
+     *         in="query",
+     *         description="Filter by employee ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="shift_type_id",
+     *         in="query",
+     *         description="Filter by shift type ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Field to sort by",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"created_at", "updated_at"}, default="created_at")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_dir",
+     *         in="query",
+     *         description="Sort direction",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc")
+     *     ),
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="The current page for pagination",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="pageSize",
+     *         in="query",
+     *         description="The number of items per page",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=10)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of shift configurations",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="employee_id", type="integer", example=42),
+     *                 @OA\Property(property="shift_type_id", type="integer", example=3),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )),
+     *             @OA\Property(property="meta", type="object", description="Pagination metadata")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     )
+     * )
      */
     public function index(Request $request)
     {
         [$page, $pageSize] = $this->getPageParams($request);
-        
+
         $query = ShiftConfiguration::with(['employee', 'shiftType']);
-        
+
         // Filters
         if ($request->has('employee_id')) {
             $query->where('employee_id', $request->input('employee_id'));
         }
-        
+
         if ($request->has('shift_type_id')) {
             $query->where('shift_type_id', $request->input('shift_type_id'));
         }
-        
+
         // Sort
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDir = $request->input('sort_dir', 'desc');
         $allowedSortFields = ['created_at', 'updated_at'];
-        
+
         if (in_array($sortBy, $allowedSortFields)) {
             $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
         }
-        
+
         $configurations = $query->paginate($pageSize, ['*'], 'page', $page);
-        
+
         return $this->paginatedResponse($configurations);
     }
-    
+
     /**
-     * Get shift configurations for supervisor's team.
+     * @OA\Get(
+     *     path="/api/shift-configurations/team",
+     *     summary="Get shift configurations for the supervisor's team",
+     *     description="Retrieves a list of shift configurations for the employees supervised by the authenticated user.",
+     *     operationId="teamShiftConfigurations",
+     *     tags={"ShiftConfigurations"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="employee_id",
+     *         in="query",
+     *         description="Filter by employee ID among supervised employees",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Parameter(
+     *         name="shift_type_id",
+     *         in="query",
+     *         description="Filter by shift type ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of shift configurations for supervised employees",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="employee_id", type="integer", example=42),
+     *                 @OA\Property(property="shift_type_id", type="integer", example=3),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )),
+     *             @OA\Property(property="meta", type="object", description="Pagination metadata")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="The user is not a supervisor or is not linked to an employee profile"
+     *     )
+     * )
      */
     public function teamConfigurations(Request $request)
     {
         $user = $request->user();
         $employee = $user->employee;
-        
+
         if (!$employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 400);
         }
-        
+
         [$page, $pageSize] = $this->getPageParams($request);
-        
+
         // Get all supervisees
         $superviseeIds = Employee::where('supervisor_id', $employee->id)
             ->pluck('id')
             ->toArray();
-            
+
         if (empty($superviseeIds)) {
             return $this->successResponse([], 'No team members found.');
         }
-        
+
         $query = ShiftConfiguration::with(['employee', 'shiftType'])
             ->whereIn('employee_id', $superviseeIds);
-            
+
         // Employee filter
         if ($request->has('employee_id') && in_array($request->input('employee_id'), $superviseeIds)) {
             $query->where('employee_id', $request->input('employee_id'));
         }
-        
+
         // Shift type filter
         if ($request->has('shift_type_id')) {
             $query->where('shift_type_id', $request->input('shift_type_id'));
         }
-        
+
         $configurations = $query->orderBy('created_at', 'desc')
             ->paginate($pageSize, ['*'], 'page', $page);
-        
+
         return $this->paginatedResponse($configurations);
     }
-    
+
     /**
-     * Get shift configurations for the current employee.
+     * @OA\Get(
+     *     path="/api/shift-configurations/my-configurations",
+     *     summary="Get shift configurations for the current employee",
+     *     description="Retrieves a list of shift configurations specific to the authenticated employee.",
+     *     operationId="myShiftConfigurations",
+     *     tags={"ShiftConfigurations"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="shift_type_id",
+     *         in="query",
+     *         description="Filter by shift type ID",
+     *         required=false,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="List of shift configurations for the authenticated employee",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="employee_id", type="integer", example=42),
+     *                 @OA\Property(property="shift_type_id", type="integer", example=3),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time")
+     *             )),
+     *             @OA\Property(property="meta", type="object", description="Pagination metadata")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="The user is not linked to an employee profile"
+     *     )
+     * )
      */
     public function myConfigurations(Request $request)
     {
         $user = $request->user();
         $employee = $user->employee;
-        
+
         if (!$employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
         }
-        
+
         [$page, $pageSize] = $this->getPageParams($request);
-        
+
         $query = ShiftConfiguration::with('shiftType')
             ->where('employee_id', $employee->id);
-            
+
         // Shift type filter
         if ($request->has('shift_type_id')) {
             $query->where('shift_type_id', $request->input('shift_type_id'));
         }
-        
+
         $configurations = $query->orderBy('created_at', 'desc')
             ->paginate($pageSize, ['*'], 'page', $page);
-        
+
         return $this->paginatedResponse($configurations);
     }
 
     /**
-     * Store a newly created shift configuration.
+     * @OA\Post(
+     *     path="/api/shift-configurations",
+     *     operationId="storeShiftConfiguration",
+     *     tags={"Shift Configuration"},
+     *     summary="Store a new shift configuration",
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(ref="#/components/schemas/ShiftConfiguration")
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Shift configuration created successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/ShiftConfiguration")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation errors"
+     *     )
+     * )
      */
     public function store(Request $request)
     {
@@ -129,7 +304,7 @@ class ShiftConfigurationController extends ApiController
         if ($validator->fails()) {
             return $this->errorResponse('Validation error', 422, $validator->errors()->toArray());
         }
-        
+
         // Check for duplicate configurations
         $existingConfig = ShiftConfiguration::where('employee_id', $request->input('employee_id'))
             ->where('shift_type_id', $request->input('shift_type_id'))
@@ -156,7 +331,7 @@ class ShiftConfigurationController extends ApiController
                 }
             })
             ->first();
-            
+
         if ($existingConfig) {
             return $this->errorResponse('A configuration for this employee and shift type already exists in the specified date range.', 422);
         }
@@ -170,7 +345,7 @@ class ShiftConfigurationController extends ApiController
                 'is_active' => $request->input('is_active', true),
                 'priority' => $request->input('priority', 1),
             ]);
-            
+
             return $this->successResponse($configuration, 'Shift configuration created successfully', 201);
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to create shift configuration: ' . $e->getMessage(), 500);
@@ -178,15 +353,45 @@ class ShiftConfigurationController extends ApiController
     }
 
     /**
-     * Display the specified shift configuration.
+     * @OA\Get(
+     *     path="/api/shift-configurations/{id}",
+     *     summary="Retrieve a specific shift configuration by ID",
+     *     description="Gets the details of a specific shift configuration identified by its ID.",
+     *     operationId="getShiftConfigurationById",
+     *     tags={"ShiftConfigurations"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of the shift configuration",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Shift configuration details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object", ref="#/components/schemas/ShiftConfiguration")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden - You do not have permission for this action"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Shift configuration not found"
+     *     )
+     * )
      */
     public function show(string $id, Request $request)
     {
         $configuration = ShiftConfiguration::with(['employee', 'shiftType'])->findOrFail($id);
-        
+
         // Role-based access control
         $user = $request->user();
-        
+
         if ($user->isEmployee()) {
             // Employee can only view their own configurations
             $employee = $user->employee;
@@ -205,17 +410,58 @@ class ShiftConfigurationController extends ApiController
                 return $this->errorResponse('Supervisor account is not linked to an employee profile.', 400);
             }
         }
-        
+
         return $this->successResponse($configuration);
     }
 
     /**
-     * Update the specified shift configuration.
+     * @OA\Put(
+     *     path="/api/shift-configurations/{id}",
+     *     summary="Update a shift configuration",
+     *     description="Allows an admin to update an existing shift configuration by ID.",
+     *     operationId="updateShiftConfiguration",
+     *     tags={"ShiftConfigurations"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of the shift configuration to update",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="employee_id", type="integer", example=42, description="ID of the employee"),
+     *             @OA\Property(property="shift_type_id", type="integer", example=3, description="ID of the shift type")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Shift configuration successfully updated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object", ref="#/components/schemas/ShiftConfiguration")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Validation error"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden - You do not have permission for this action"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Shift configuration not found"
+     *     )
+     * )
      */
     public function update(Request $request, string $id)
     {
         $configuration = ShiftConfiguration::findOrFail($id);
-        
+
         $validator = Validator::make($request->all(), [
             'employee_id' => 'sometimes|required|exists:employees,id',
             'shift_type_id' => 'sometimes|required|exists:shift_types,id',
@@ -228,14 +474,14 @@ class ShiftConfigurationController extends ApiController
         if ($validator->fails()) {
             return $this->errorResponse('Validation error', 422, $validator->errors()->toArray());
         }
-        
+
         // Check for duplicate configurations (excluding this one)
         if ($request->has('employee_id') || $request->has('shift_type_id') || $request->has('start_date') || $request->has('end_date')) {
             $employeeId = $request->input('employee_id', $configuration->employee_id);
             $shiftTypeId = $request->input('shift_type_id', $configuration->shift_type_id);
             $startDate = $request->input('start_date', $configuration->start_date);
             $endDate = $request->has('end_date') ? $request->input('end_date') : $configuration->end_date;
-            
+
             $existingConfig = ShiftConfiguration::where('employee_id', $employeeId)
                 ->where('shift_type_id', $shiftTypeId)
                 ->where('id', '!=', $id)
@@ -262,7 +508,7 @@ class ShiftConfigurationController extends ApiController
                     }
                 })
                 ->first();
-                
+
             if ($existingConfig) {
                 return $this->errorResponse('A configuration for this employee and shift type already exists in the specified date range.', 422);
             }
@@ -270,7 +516,7 @@ class ShiftConfigurationController extends ApiController
 
         try {
             $configuration->update($request->all());
-            
+
             return $this->successResponse($configuration, 'Shift configuration updated successfully');
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to update shift configuration: ' . $e->getMessage(), 500);
@@ -278,15 +524,45 @@ class ShiftConfigurationController extends ApiController
     }
 
     /**
-     * Remove the specified shift configuration.
+     * @OA\Delete(
+     *     path="/api/shift-configurations/{id}",
+     *     summary="Delete a shift configuration",
+     *     description="Deletes a shift configuration by its ID. Only accessible by admins.",
+     *     operationId="deleteShiftConfiguration",
+     *     tags={"ShiftConfigurations"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID of the shift configuration to delete",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Shift configuration successfully deleted",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Shift configuration deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Forbidden - You do not have permission for this action"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Shift configuration not found"
+     *     )
+     * )
      */
     public function destroy(string $id)
     {
         $configuration = ShiftConfiguration::findOrFail($id);
-        
+
         // Check if any shifts are using this configuration
         // This would typically be done through a relationship if such exists
-        
+
         try {
             $configuration->delete();
             return $this->successResponse(null, 'Shift configuration deleted successfully');
