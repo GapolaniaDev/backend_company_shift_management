@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Tag(
- *     name="Turnos",
- *     description="Gestión de turnos de trabajo"
+ *     name="Shifts",
+ *     description="Work shift management endpoints"
  * )
  */
 class ShiftController extends ApiController
@@ -38,64 +38,64 @@ class ShiftController extends ApiController
     /**
      * @OA\Get(
      *     path="/api/shifts",
-     *     summary="Listar turnos",
-     *     description="Obtiene un listado paginado de turnos con opciones de filtrado y ordenamiento",
+     *     summary="List shifts",
+     *     description="Returns a paginated list of shifts with filtering and sorting options",
      *     operationId="listShifts",
-     *     tags={"Turnos"},
+     *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="employee_id",
      *         in="query",
-     *         description="Filtrar por ID del empleado",
+     *         description="Filter by employee ID",
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
-     *         description="Fecha de inicio (YYYY-MM-DD)",
+     *         description="Start date (YYYY-MM-DD)",
      *         required=false,
      *         @OA\Schema(type="string", format="date")
      *     ),
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
-     *         description="Fecha de fin (YYYY-MM-DD)",
+     *         description="End date (YYYY-MM-DD)",
      *         required=false,
      *         @OA\Schema(type="string", format="date")
      *     ),
      *     @OA\Parameter(
      *         name="shift_type_id",
      *         in="query",
-     *         description="Filtrar por tipo de turno",
+     *         description="Filter by shift type ID",
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
-     *         description="Página actual",
+     *         description="Current page",
      *         required=false,
      *         @OA\Schema(type="integer", default=1)
      *     ),
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Elementos por página",
+     *         description="Items per page",
      *         required=false,
      *         @OA\Schema(type="integer", default=15)
      *     ),
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
-     *         description="Campo para ordenar",
+     *         description="Field to sort by",
      *         required=false,
      *         @OA\Schema(type="string", enum={"date_start", "date_end", "created_at", "total_hours"}, default="date_start")
      *     ),
      *     @OA\Parameter(
      *         name="sort_dir",
      *         in="query",
-     *         description="Dirección de ordenamiento",
+     *         description="Sort direction",
      *         required=false,
      *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc")
      *     ),

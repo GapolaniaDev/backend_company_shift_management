@@ -11,8 +11,8 @@ use Illuminate\Http\JsonResponse;
 
 /**
  * @OA\Tag(
- *     name="Empleados",
- *     description="Gestión de empleados del sistema"
+ *     name="Employees",
+ *     description="Employee management endpoints"
  * )
  */
 class EmployeeController extends ApiController
@@ -20,65 +20,65 @@ class EmployeeController extends ApiController
     /**
      * @OA\Get(
      *     path="/api/employees",
-     *     summary="Listar empleados",
-     *     description="Obtiene un listado paginado de empleados con opciones de filtrado y ordenamiento",
+     *     summary="List employees",
+     *     description="Returns a paginated list of employees with filtering and sorting options",
      *     operationId="listEmployees",
-     *     tags={"Empleados"},
+     *     tags={"Employees"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Buscar por nombre o email",
+     *         description="Search by name or email",
      *         required=false,
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Parameter(
      *         name="supervisor_id",
      *         in="query",
-     *         description="Filtrar por ID del supervisor",
+     *         description="Filter by supervisor ID",
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
-     *         description="Página actual",
+     *         description="Current page",
      *         required=false,
      *         @OA\Schema(type="integer", default=1)
      *     ),
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Elementos por página",
+     *         description="Items per page",
      *         required=false,
      *         @OA\Schema(type="integer", default=15)
      *     ),
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
-     *         description="Campo para ordenar",
+     *         description="Field to sort by",
      *         required=false,
      *         @OA\Schema(type="string", enum={"first_name", "last_name", "email", "created_at"}, default="created_at")
      *     ),
      *     @OA\Parameter(
      *         name="sort_dir",
      *         in="query",
-     *         description="Dirección de ordenamiento",
+     *         description="Sort direction",
      *         required=false,
      *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista paginada de empleados",
+     *         description="Paginated list of employees",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array", @OA\Items(
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="user_id", type="integer", example=1, nullable=true),
      *                 @OA\Property(property="supervisor_id", type="integer", example=5, nullable=true),
-     *                 @OA\Property(property="first_name", type="string", example="Juan"),
-     *                 @OA\Property(property="last_name", type="string", example="Pérez"),
-     *                 @OA\Property(property="email", type="string", example="juan@example.com"),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Smith"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
      *                 @OA\Property(property="phone_number", type="string", example="123-456-7890"),
      *                 @OA\Property(property="created_at", type="string", format="date-time")
      *             )),
@@ -103,21 +103,21 @@ class EmployeeController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="No autenticado",
+     *         description="Unauthenticated",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Prohibido",
+     *         description="Forbidden",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthorized. Insufficient permissions.")
      *         )
      *     ),
      *     @OA\Response(
      *         response=400,
-     *         description="Error de solicitud",
+     *         description="Bad request",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Supervisor account is not linked to an employee profile.")

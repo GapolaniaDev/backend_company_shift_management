@@ -2,7 +2,7 @@
     "openapi": "3.0.0",
     "info": {
         "title": "Shift Management API",
-        "description": "API para sistema de gestión de turnos y empleados",
+        "description": "API for shift and employee management system",
         "contact": {
             "name": "API Support",
             "email": "admin@example.com"
@@ -19,10 +19,10 @@
         "/api/register": {
             "post": {
                 "tags": [
-                    "Autenticación"
+                    "Authentication"
                 ],
-                "summary": "Registrar un nuevo usuario",
-                "description": "Crea un nuevo usuario en el sistema",
+                "summary": "Register a new user",
+                "description": "Creates a new user in the system",
                 "operationId": "registerUser",
                 "requestBody": {
                     "required": true,
@@ -37,30 +37,30 @@
                                 ],
                                 "properties": {
                                     "name": {
-                                        "description": "Nombre completo del usuario",
+                                        "description": "Full name of the user",
                                         "type": "string",
-                                        "example": "Juan Pérez"
+                                        "example": "John Smith"
                                     },
                                     "email": {
-                                        "description": "Correo electrónico",
+                                        "description": "Email address",
                                         "type": "string",
                                         "format": "email",
-                                        "example": "juan@example.com"
+                                        "example": "john@example.com"
                                     },
                                     "password": {
-                                        "description": "Contraseña (mínimo 8 caracteres)",
+                                        "description": "Password (minimum 8 characters)",
                                         "type": "string",
                                         "format": "password",
                                         "example": "password123"
                                     },
                                     "password_confirmation": {
-                                        "description": "Confirmación de contraseña",
+                                        "description": "Password confirmation",
                                         "type": "string",
                                         "format": "password",
                                         "example": "password123"
                                     },
                                     "role": {
-                                        "description": "Rol del usuario (opcional)",
+                                        "description": "User role (optional)",
                                         "type": "string",
                                         "enum": [
                                             "admin",
@@ -77,7 +77,7 @@
                 },
                 "responses": {
                     "201": {
-                        "description": "Usuario registrado correctamente",
+                        "description": "User successfully registered",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -93,7 +93,7 @@
                         }
                     },
                     "422": {
-                        "description": "Error de validación",
+                        "description": "Validation error",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -102,14 +102,14 @@
                                             "type": "array",
                                             "items": {
                                                 "type": "string",
-                                                "example": "El email ya está en uso"
+                                                "example": "The email has already been taken"
                                             }
                                         },
                                         "password": {
                                             "type": "array",
                                             "items": {
                                                 "type": "string",
-                                                "example": "La contraseña debe tener al menos 8 caracteres"
+                                                "example": "The password must be at least 8 characters"
                                             }
                                         }
                                     },
@@ -124,10 +124,10 @@
         "/api/login": {
             "post": {
                 "tags": [
-                    "Autenticación"
+                    "Authentication"
                 ],
-                "summary": "Iniciar sesión",
-                "description": "Autentica al usuario y devuelve un token de acceso",
+                "summary": "Login to the system",
+                "description": "Authenticates a user and returns an access token",
                 "operationId": "loginUser",
                 "requestBody": {
                     "required": true,
@@ -140,19 +140,19 @@
                                 ],
                                 "properties": {
                                     "email": {
-                                        "description": "Correo electrónico",
+                                        "description": "Email address",
                                         "type": "string",
                                         "format": "email",
-                                        "example": "juan@example.com"
+                                        "example": "john@example.com"
                                     },
                                     "password": {
-                                        "description": "Contraseña",
+                                        "description": "Password",
                                         "type": "string",
                                         "format": "password",
                                         "example": "password123"
                                     },
                                     "extended_token": {
-                                        "description": "Solicitar token de larga duración (24h en lugar de 1h)",
+                                        "description": "Request a long-lived token (24h instead of 1h)",
                                         "type": "boolean",
                                         "example": false
                                     }
@@ -164,7 +164,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Login exitoso",
+                        "description": "Successful login",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -182,7 +182,7 @@
                                             "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
                                         },
                                         "expires_in": {
-                                            "description": "Tiempo de expiración en segundos",
+                                            "description": "Token expiration time in seconds",
                                             "type": "integer",
                                             "example": 3600
                                         },
@@ -194,11 +194,11 @@
                                                 },
                                                 "name": {
                                                     "type": "string",
-                                                    "example": "Juan Pérez"
+                                                    "example": "John Smith"
                                                 },
                                                 "email": {
                                                     "type": "string",
-                                                    "example": "juan@example.com"
+                                                    "example": "john@example.com"
                                                 },
                                                 "role": {
                                                     "type": "string",
@@ -214,7 +214,7 @@
                         }
                     },
                     "401": {
-                        "description": "Credenciales inválidas",
+                        "description": "Invalid credentials",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -234,7 +234,7 @@
                         }
                     },
                     "422": {
-                        "description": "Error de validación",
+                        "description": "Validation error",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -253,14 +253,14 @@
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
-                                                        "example": "El campo email es obligatorio"
+                                                        "example": "The email field is required"
                                                     }
                                                 },
                                                 "password": {
                                                     "type": "array",
                                                     "items": {
                                                         "type": "string",
-                                                        "example": "El campo password es obligatorio"
+                                                        "example": "The password field is required"
                                                     }
                                                 }
                                             },
@@ -278,14 +278,14 @@
         "/api/logout": {
             "post": {
                 "tags": [
-                    "Autenticación"
+                    "Authentication"
                 ],
-                "summary": "Cerrar sesión",
-                "description": "Revoca el token de acceso del usuario",
+                "summary": "Logout from the system",
+                "description": "Revokes the user's access token",
                 "operationId": "logoutUser",
                 "responses": {
                     "200": {
-                        "description": "Sesión cerrada correctamente",
+                        "description": "Successfully logged out",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -301,7 +301,7 @@
                         }
                     },
                     "401": {
-                        "description": "No autenticado",
+                        "description": "Unauthenticated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -327,14 +327,14 @@
         "/api/user": {
             "get": {
                 "tags": [
-                    "Autenticación"
+                    "Authentication"
                 ],
-                "summary": "Obtener información del usuario autenticado",
-                "description": "Devuelve los datos del usuario actual y su perfil de empleado si existe",
+                "summary": "Get authenticated user information",
+                "description": "Returns current user data and employee profile if it exists",
                 "operationId": "getCurrentUser",
                 "responses": {
                     "200": {
-                        "description": "Datos del usuario",
+                        "description": "User data",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -345,11 +345,11 @@
                                         },
                                         "name": {
                                             "type": "string",
-                                            "example": "Juan Pérez"
+                                            "example": "John Smith"
                                         },
                                         "email": {
                                             "type": "string",
-                                            "example": "juan@example.com"
+                                            "example": "john@example.com"
                                         },
                                         "role": {
                                             "type": "string",
@@ -363,19 +363,19 @@
                                                 },
                                                 "first_name": {
                                                     "type": "string",
-                                                    "example": "Juan"
+                                                    "example": "John"
                                                 },
                                                 "last_name": {
                                                     "type": "string",
-                                                    "example": "Pérez"
+                                                    "example": "Smith"
                                                 },
                                                 "full_name": {
                                                     "type": "string",
-                                                    "example": "Juan Pérez"
+                                                    "example": "John Smith"
                                                 },
                                                 "email": {
                                                     "type": "string",
-                                                    "example": "juan@example.com"
+                                                    "example": "john@example.com"
                                                 }
                                             },
                                             "type": "object",
@@ -388,7 +388,7 @@
                         }
                     },
                     "401": {
-                        "description": "No autenticado",
+                        "description": "Unauthenticated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -414,10 +414,10 @@
         "/api/refresh-token": {
             "post": {
                 "tags": [
-                    "Autenticación"
+                    "Authentication"
                 ],
-                "summary": "Renovar token",
-                "description": "Revoca los tokens actuales y genera uno nuevo",
+                "summary": "Refresh token",
+                "description": "Revokes current tokens and generates a new one",
                 "operationId": "refreshToken",
                 "requestBody": {
                     "content": {
@@ -425,7 +425,7 @@
                             "schema": {
                                 "properties": {
                                     "extended_token": {
-                                        "description": "Solicitar token de larga duración (24h en lugar de 1h)",
+                                        "description": "Request a long-lived token (24h instead of 1h)",
                                         "type": "boolean",
                                         "example": false
                                     }
@@ -437,7 +437,7 @@
                 },
                 "responses": {
                     "200": {
-                        "description": "Token renovado",
+                        "description": "Token refreshed",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -455,7 +455,7 @@
                                             "example": "eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."
                                         },
                                         "expires_in": {
-                                            "description": "Tiempo de expiración en segundos",
+                                            "description": "Token expiration time in seconds",
                                             "type": "integer",
                                             "example": 3600
                                         }
@@ -466,7 +466,7 @@
                         }
                     },
                     "401": {
-                        "description": "No autenticado",
+                        "description": "Unauthenticated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -492,16 +492,16 @@
         "/api/employees": {
             "get": {
                 "tags": [
-                    "Empleados"
+                    "Employees"
                 ],
-                "summary": "Listar empleados",
-                "description": "Obtiene un listado paginado de empleados con opciones de filtrado y ordenamiento",
+                "summary": "List employees",
+                "description": "Returns a paginated list of employees with filtering and sorting options",
                 "operationId": "listEmployees",
                 "parameters": [
                     {
                         "name": "search",
                         "in": "query",
-                        "description": "Buscar por nombre o email",
+                        "description": "Search by name or email",
                         "required": false,
                         "schema": {
                             "type": "string"
@@ -510,7 +510,7 @@
                     {
                         "name": "supervisor_id",
                         "in": "query",
-                        "description": "Filtrar por ID del supervisor",
+                        "description": "Filter by supervisor ID",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -519,7 +519,7 @@
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Página actual",
+                        "description": "Current page",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -529,7 +529,7 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Elementos por página",
+                        "description": "Items per page",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -539,7 +539,7 @@
                     {
                         "name": "sort_by",
                         "in": "query",
-                        "description": "Campo para ordenar",
+                        "description": "Field to sort by",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -555,7 +555,7 @@
                     {
                         "name": "sort_dir",
                         "in": "query",
-                        "description": "Dirección de ordenamiento",
+                        "description": "Sort direction",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -569,7 +569,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Lista paginada de empleados",
+                        "description": "Paginated list of employees",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -598,15 +598,15 @@
                                                     },
                                                     "first_name": {
                                                         "type": "string",
-                                                        "example": "Juan"
+                                                        "example": "John"
                                                     },
                                                     "last_name": {
                                                         "type": "string",
-                                                        "example": "Pérez"
+                                                        "example": "Smith"
                                                     },
                                                     "email": {
                                                         "type": "string",
-                                                        "example": "juan@example.com"
+                                                        "example": "john@example.com"
                                                     },
                                                     "phone_number": {
                                                         "type": "string",
@@ -673,7 +673,7 @@
                         }
                     },
                     "401": {
-                        "description": "No autenticado",
+                        "description": "Unauthenticated",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -689,7 +689,7 @@
                         }
                     },
                     "403": {
-                        "description": "Prohibido",
+                        "description": "Forbidden",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -705,7 +705,7 @@
                         }
                     },
                     "400": {
-                        "description": "Error de solicitud",
+                        "description": "Bad request",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1281,16 +1281,16 @@
         "/api/shifts": {
             "get": {
                 "tags": [
-                    "Turnos"
+                    "Shifts"
                 ],
-                "summary": "Listar turnos",
-                "description": "Obtiene un listado paginado de turnos con opciones de filtrado y ordenamiento",
+                "summary": "List shifts",
+                "description": "Returns a paginated list of shifts with filtering and sorting options",
                 "operationId": "listShifts",
                 "parameters": [
                     {
                         "name": "employee_id",
                         "in": "query",
-                        "description": "Filtrar por ID del empleado",
+                        "description": "Filter by employee ID",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -1299,7 +1299,7 @@
                     {
                         "name": "date_from",
                         "in": "query",
-                        "description": "Fecha de inicio (YYYY-MM-DD)",
+                        "description": "Start date (YYYY-MM-DD)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1309,7 +1309,7 @@
                     {
                         "name": "date_to",
                         "in": "query",
-                        "description": "Fecha de fin (YYYY-MM-DD)",
+                        "description": "End date (YYYY-MM-DD)",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1319,7 +1319,7 @@
                     {
                         "name": "shift_type_id",
                         "in": "query",
-                        "description": "Filtrar por tipo de turno",
+                        "description": "Filter by shift type ID",
                         "required": false,
                         "schema": {
                             "type": "integer"
@@ -1328,7 +1328,7 @@
                     {
                         "name": "page",
                         "in": "query",
-                        "description": "Página actual",
+                        "description": "Current page",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -1338,7 +1338,7 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Elementos por página",
+                        "description": "Items per page",
                         "required": false,
                         "schema": {
                             "type": "integer",
@@ -1348,7 +1348,7 @@
                     {
                         "name": "sort_by",
                         "in": "query",
-                        "description": "Campo para ordenar",
+                        "description": "Field to sort by",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1364,7 +1364,7 @@
                     {
                         "name": "sort_dir",
                         "in": "query",
-                        "description": "Dirección de ordenamiento",
+                        "description": "Sort direction",
                         "required": false,
                         "schema": {
                             "type": "string",
@@ -1828,16 +1828,24 @@
     },
     "tags": [
         {
-            "name": "Autenticación",
-            "description": "Endpoints de registro, login y gestión de sesiones"
+            "name": "Authentication",
+            "description": "User registration, login and session management endpoints"
+        },
+        {
+            "name": "Employees",
+            "description": "Employee management endpoints"
+        },
+        {
+            "name": "Shifts",
+            "description": "Work shift management endpoints"
         },
         {
             "name": "Empleados",
-            "description": "Gestión de empleados del sistema"
+            "description": "Empleados"
         },
         {
             "name": "Turnos",
-            "description": "Gestión de turnos de trabajo"
+            "description": "Turnos"
         }
     ]
 }
