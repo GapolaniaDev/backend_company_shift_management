@@ -15,6 +15,8 @@ class Employee extends Model
      * @var array<string>
      */
     protected $fillable = [
+        'user_id',
+        'supervisor_id',
         'first_name',
         'last_name',
         'email',
@@ -40,5 +42,37 @@ class Employee extends Model
     public function shifts()
     {
         return $this->hasMany(Shift::class, 'employee_id');
+    }
+    
+    /**
+     * Get the user associated with the employee.
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+    
+    /**
+     * Get the supervisor of this employee.
+     */
+    public function supervisor()
+    {
+        return $this->belongsTo(Employee::class, 'supervisor_id');
+    }
+    
+    /**
+     * Get employees supervised by this employee.
+     */
+    public function supervisees()
+    {
+        return $this->hasMany(Employee::class, 'supervisor_id');
+    }
+    
+    /**
+     * Get full name of employee
+     */
+    public function getFullNameAttribute()
+    {
+        return $this->first_name . ' ' . $this->last_name;
     }
 }

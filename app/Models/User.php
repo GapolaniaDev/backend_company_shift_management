@@ -20,6 +20,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -40,4 +41,44 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
+    
+    /**
+     * Check if the user has a specific role
+     */
+    public function hasRole(string $role): bool
+    {
+        return $this->role === $role;
+    }
+    
+    /**
+     * Check if the user is an admin
+     */
+    public function isAdmin(): bool
+    {
+        return $this->hasRole('admin');
+    }
+    
+    /**
+     * Check if the user is a supervisor
+     */
+    public function isSupervisor(): bool
+    {
+        return $this->hasRole('supervisor');
+    }
+    
+    /**
+     * Check if the user is an employee
+     */
+    public function isEmployee(): bool
+    {
+        return $this->hasRole('employee');
+    }
+    
+    /**
+     * Get the employee associated with the user
+     */
+    public function employee()
+    {
+        return $this->hasOne(Employee::class);
+    }
 }

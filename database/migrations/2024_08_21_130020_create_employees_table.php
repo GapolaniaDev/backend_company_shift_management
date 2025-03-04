@@ -13,6 +13,8 @@ return new class extends Migration
     {
         Schema::create('employees', function (Blueprint $table) {
             $table->id();
+            $table->foreignId('user_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('supervisor_id')->nullable()->references('id')->on('employees')->onDelete('set null');
             $table->string('first_name', 50);
             $table->string('last_name', 50);
             $table->string('email', 100)->nullable();
