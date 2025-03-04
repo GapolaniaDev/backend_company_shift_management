@@ -5,6 +5,59 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
+/**
+ * @OA\Schema(
+ *     schema="Shift",
+ *     title="Shift",
+ *     description="Work shift with schedule, employee assignment, and clock in/out data",
+ *     @OA\Property(property="id", type="integer", format="int64", example=1, description="Unique identifier"),
+ *     @OA\Property(property="shift_type_id", type="integer", example=2, description="Associated shift type ID"),
+ *     @OA\Property(property="employee_id", type="integer", example=5, description="Assigned employee ID"),
+ *     @OA\Property(property="date_start", type="string", format="date-time", example="2025-03-10T09:00:00Z", description="Shift start date and time"),
+ *     @OA\Property(property="date_end", type="string", format="date-time", example="2025-03-10T17:00:00Z", description="Shift end date and time"),
+ *     @OA\Property(property="total_hours", type="number", format="float", example=8.5, description="Total scheduled hours"),
+ *     @OA\Property(property="weekday_code", type="integer", example=1, description="Day of week (0=Sunday, 6=Saturday)"),
+ *     @OA\Property(property="comments", type="string", nullable=true, example="Cover for John", description="Additional shift notes"),
+ *     @OA\Property(property="replacement_id", type="integer", nullable=true, example=7, description="Replacement employee ID if applicable"),
+ *     @OA\Property(property="location", type="string", nullable=true, example="Main Branch", description="Work location"),
+ *     @OA\Property(property="location_lat", type="number", format="float", nullable=true, example=37.7749, description="Location latitude"),
+ *     @OA\Property(property="location_lng", type="number", format="float", nullable=true, example=-122.4194, description="Location longitude"),
+ *     @OA\Property(property="radius", type="integer", nullable=true, example=100, description="Allowable radius in meters for clock in/out"),
+ *     @OA\Property(property="zoom", type="integer", nullable=true, example=16, description="Map zoom level for location"),
+ *     @OA\Property(property="clock_on_time", type="string", format="date-time", nullable=true, description="Actual clock-in timestamp"),
+ *     @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true, description="Actual clock-out timestamp"),
+ *     @OA\Property(property="clock_on_lat", type="number", format="float", nullable=true, example=37.775, description="Clock-in latitude"),
+ *     @OA\Property(property="clock_on_lng", type="number", format="float", nullable=true, example=-122.419, description="Clock-in longitude"),
+ *     @OA\Property(property="clock_off_lat", type="number", format="float", nullable=true, example=37.775, description="Clock-out latitude"),
+ *     @OA\Property(property="clock_off_lng", type="number", format="float", nullable=true, example=-122.419, description="Clock-out longitude"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", description="Timestamp when record was created"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", description="Timestamp when record was last updated"),
+ *     @OA\Property(
+ *         property="employee",
+ *         ref="#/components/schemas/Employee",
+ *         description="Assigned employee details"
+ *     ),
+ *     @OA\Property(
+ *         property="shift_type",
+ *         ref="#/components/schemas/ShiftType",
+ *         description="Shift type details"
+ *     ),
+ *     @OA\Property(
+ *         property="replacement",
+ *         ref="#/components/schemas/Employee",
+ *         nullable=true,
+ *         description="Replacement employee details if applicable"
+ *     ),
+ *     @OA\Property(
+ *         property="image_profile",
+ *         type="object",
+ *         description="Employee profile image data generated for the UI",
+ *         @OA\Property(property="text_profile", type="string", example="JD"),
+ *         @OA\Property(property="text_color", type="string", example="1D5A73"),
+ *         @OA\Property(property="background_color", type="string", example="E6F1F5")
+ *     )
+ * )
+ */
 class Shift extends Model
 {
     use HasFactory;

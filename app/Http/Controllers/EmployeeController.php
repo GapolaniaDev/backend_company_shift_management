@@ -11,8 +11,8 @@ use Illuminate\Http\JsonResponse;
 
 /**
  * @OA\Tag(
- *     name="Empleados",
- *     description="Gestión de empleados del sistema"
+ *     name="Employees",
+ *     description="Employee management endpoints"
  * )
  */
 class EmployeeController extends ApiController
@@ -20,65 +20,65 @@ class EmployeeController extends ApiController
     /**
      * @OA\Get(
      *     path="/api/employees",
-     *     summary="Listar empleados",
-     *     description="Obtiene un listado paginado de empleados con opciones de filtrado y ordenamiento",
+     *     summary="List employees",
+     *     description="Returns a paginated list of employees with filtering and sorting options",
      *     operationId="listEmployees",
-     *     tags={"Empleados"},
+     *     tags={"Employees"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Buscar por nombre o email",
+     *         description="Search by name or email",
      *         required=false,
      *         @OA\Schema(type="string")
      *     ),
      *     @OA\Parameter(
      *         name="supervisor_id",
      *         in="query",
-     *         description="Filtrar por ID del supervisor",
+     *         description="Filter by supervisor ID",
      *         required=false,
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
-     *         description="Página actual",
+     *         description="Current page",
      *         required=false,
      *         @OA\Schema(type="integer", default=1)
      *     ),
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Elementos por página",
+     *         description="Items per page",
      *         required=false,
      *         @OA\Schema(type="integer", default=15)
      *     ),
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
-     *         description="Campo para ordenar",
+     *         description="Field to sort by",
      *         required=false,
      *         @OA\Schema(type="string", enum={"first_name", "last_name", "email", "created_at"}, default="created_at")
      *     ),
      *     @OA\Parameter(
      *         name="sort_dir",
      *         in="query",
-     *         description="Dirección de ordenamiento",
+     *         description="Sort direction",
      *         required=false,
      *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista paginada de empleados",
+     *         description="Paginated list of employees",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array", @OA\Items(
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="user_id", type="integer", example=1, nullable=true),
      *                 @OA\Property(property="supervisor_id", type="integer", example=5, nullable=true),
-     *                 @OA\Property(property="first_name", type="string", example="Juan"),
-     *                 @OA\Property(property="last_name", type="string", example="Pérez"),
-     *                 @OA\Property(property="email", type="string", example="juan@example.com"),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Smith"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
      *                 @OA\Property(property="phone_number", type="string", example="123-456-7890"),
      *                 @OA\Property(property="created_at", type="string", format="date-time")
      *             )),
@@ -103,21 +103,21 @@ class EmployeeController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="No autenticado",
+     *         description="Unauthenticated",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Prohibido",
+     *         description="Forbidden",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthorized. Insufficient permissions.")
      *         )
      *     ),
      *     @OA\Response(
      *         response=400,
-     *         description="Error de solicitud",
+     *         description="Bad request",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Supervisor account is not linked to an employee profile.")
@@ -128,24 +128,24 @@ class EmployeeController extends ApiController
     public function index(Request $request)
     {
         [$page, $pageSize] = $this->getPageParams($request);
-        
+
         $query = Employee::query();
-        
+
         // Search by name
         if ($request->has('search')) {
             $search = $request->input('search');
-            $query->where(function($q) use ($search) {
+            $query->where(function ($q) use ($search) {
                 $q->where('first_name', 'like', "%{$search}%")
-                  ->orWhere('last_name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%");
+                    ->orWhere('last_name', 'like', "%{$search}%")
+                    ->orWhere('email', 'like', "%{$search}%");
             });
         }
-        
+
         // Filter by supervisor
         if ($request->has('supervisor_id')) {
             $query->where('supervisor_id', $request->input('supervisor_id'));
         }
-        
+
         // Apply role-based access control
         $user = $request->user();
         if ($user->isSupervisor()) {
@@ -157,55 +157,55 @@ class EmployeeController extends ApiController
                 return $this->errorResponse('Supervisor account is not linked to an employee profile.', 400);
             }
         }
-        
+
         // Sort by specified column
         $sortBy = $request->input('sort_by', 'created_at');
         $sortDir = $request->input('sort_dir', 'desc');
         $allowedSortFields = ['first_name', 'last_name', 'email', 'created_at'];
-        
+
         if (in_array($sortBy, $allowedSortFields)) {
             $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
         }
-        
+
         $employees = $query->paginate($pageSize, ['*'], 'page', $page);
-        
+
         return $this->paginatedResponse($employees);
     }
-    
+
     /**
      * @OA\Get(
      *     path="/api/employees/supervisees",
-     *     summary="Listar empleados supervisados",
-     *     description="Obtiene un listado de empleados bajo la supervisión del usuario actual",
+     *     summary="List supervised employees",
+     *     description="Retrieves a list of employees under the supervision of the current user",
      *     operationId="listSupervisees",
-     *     tags={"Empleados"},
+     *     tags={"Employees"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
-     *         description="Página actual",
+     *         description="Current page",
      *         required=false,
      *         @OA\Schema(type="integer", default=1)
      *     ),
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Elementos por página",
+     *         description="Items per page",
      *         required=false,
      *         @OA\Schema(type="integer", default=15)
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Lista paginada de empleados supervisados",
+     *         description="Paginated list of supervised employees",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array", @OA\Items(
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="user_id", type="integer", example=1, nullable=true),
      *                 @OA\Property(property="supervisor_id", type="integer", example=5),
-     *                 @OA\Property(property="first_name", type="string", example="Juan"),
-     *                 @OA\Property(property="last_name", type="string", example="Pérez"),
-     *                 @OA\Property(property="email", type="string", example="juan@example.com"),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Smith"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
      *                 @OA\Property(property="created_at", type="string", format="date-time")
      *             )),
      *             @OA\Property(property="pagination", type="object")
@@ -213,7 +213,7 @@ class EmployeeController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=400,
-     *         description="Error de solicitud",
+     *         description="Bad request",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Your user account is not linked to an employee profile.")
@@ -221,14 +221,14 @@ class EmployeeController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="No autenticado",
+     *         description="Unauthenticated",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Prohibido",
+     *         description="Forbidden",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthorized. Insufficient permissions.")
      *         )
@@ -239,36 +239,36 @@ class EmployeeController extends ApiController
     {
         $user = $request->user();
         $employee = $user->employee;
-        
+
         if (!$employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 400);
         }
-        
+
         [$page, $pageSize] = $this->getPageParams($request);
-        
+
         $supervisees = Employee::where('supervisor_id', $employee->id)
             ->paginate($pageSize, ['*'], 'page', $page);
-        
+
         return $this->paginatedResponse($supervisees);
     }
 
     /**
      * @OA\Post(
      *     path="/api/employees",
-     *     summary="Crear empleado",
-     *     description="Crea un nuevo empleado en el sistema",
+     *     summary="Create employee",
+     *     description="Creates a new employee in the system",
      *     operationId="storeEmployee",
-     *     tags={"Empleados"},
+     *     tags={"Employees"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
      *             required={"first_name", "last_name"},
-     *             @OA\Property(property="first_name", type="string", maxLength=50, example="Juan"),
-     *             @OA\Property(property="last_name", type="string", maxLength=50, example="Pérez"),
-     *             @OA\Property(property="email", type="string", format="email", maxLength=100, example="juan@example.com"),
+     *             @OA\Property(property="first_name", type="string", maxLength=50, example="John"),
+     *             @OA\Property(property="last_name", type="string", maxLength=50, example="Smith"),
+     *             @OA\Property(property="email", type="string", format="email", maxLength=100, example="john@example.com"),
      *             @OA\Property(property="phone_number", type="string", maxLength=20, example="123-456-7890"),
-     *             @OA\Property(property="address", type="string", maxLength=255, example="123 Calle Principal"),
+     *             @OA\Property(property="address", type="string", maxLength=255, example="123 Main Street"),
      *             @OA\Property(property="tax_number", type="string", maxLength=15, example="123456789"),
      *             @OA\Property(property="abn", type="string", maxLength=15, example="12345678901"),
      *             @OA\Property(property="bsb", type="string", maxLength=6, example="123456"),
@@ -279,7 +279,7 @@ class EmployeeController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=201,
-     *         description="Empleado creado correctamente",
+     *         description="Employee created successfully",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Employee created successfully"),
@@ -287,30 +287,30 @@ class EmployeeController extends ApiController
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="first_name", type="string", example="Juan"),
-     *                 @OA\Property(property="last_name", type="string", example="Pérez"),
-     *                 @OA\Property(property="email", type="string", example="juan@example.com"),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Smith"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
      *                 @OA\Property(property="created_at", type="string", format="date-time")
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Error de validación",
+     *         description="Validation error",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation error"),
      *             @OA\Property(
      *                 property="errors",
      *                 type="object",
-     *                 @OA\Property(property="first_name", type="array", @OA\Items(type="string", example="El campo first_name es obligatorio")),
-     *                 @OA\Property(property="email", type="array", @OA\Items(type="string", example="El campo email debe ser una dirección de correo válida"))
+     *                 @OA\Property(property="first_name", type="array", @OA\Items(type="string", example="The first_name field is required")),
+     *                 @OA\Property(property="email", type="array", @OA\Items(type="string", example="The email field must be a valid email address"))
      *             )
      *         )
      *     ),
      *     @OA\Response(
      *         response=500,
-     *         description="Error del servidor",
+     *         description="Server error",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Failed to create employee: Database error")
@@ -318,14 +318,14 @@ class EmployeeController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="No autenticado",
+     *         description="Unauthenticated",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Prohibido",
+     *         description="Forbidden",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthorized. Insufficient permissions.")
      *         )
@@ -354,9 +354,9 @@ class EmployeeController extends ApiController
 
         try {
             DB::beginTransaction();
-            
+
             $employee = Employee::create($request->all());
-            
+
             // If user_id is provided, ensure the user has the employee role
             if ($request->filled('user_id')) {
                 $user = User::find($request->input('user_id'));
@@ -364,9 +364,9 @@ class EmployeeController extends ApiController
                     $user->update(['role' => 'employee']);
                 }
             }
-            
+
             DB::commit();
-            
+
             return $this->successResponse($employee, 'Employee created successfully', 201);
         } catch (\Exception $e) {
             DB::rollBack();
@@ -377,21 +377,21 @@ class EmployeeController extends ApiController
     /**
      * @OA\Get(
      *     path="/api/employees/{id}",
-     *     summary="Ver empleado",
-     *     description="Muestra información detallada de un empleado específico",
+     *     summary="View employee",
+     *     description="Displays detailed information about a specific employee",
      *     operationId="showEmployee",
-     *     tags={"Empleados"},
+     *     tags={"Employees"},
      *     security={{"bearerAuth":{}}},
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
-     *         description="ID del empleado",
+     *         description="Employee ID",
      *         required=true,
      *         @OA\Schema(type="integer")
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Información del empleado",
+     *         description="Employee information",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
@@ -400,19 +400,19 @@ class EmployeeController extends ApiController
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="user_id", type="integer", example=1, nullable=true),
      *                 @OA\Property(property="supervisor_id", type="integer", example=5, nullable=true),
-     *                 @OA\Property(property="first_name", type="string", example="Juan"),
-     *                 @OA\Property(property="last_name", type="string", example="Pérez"),
-     *                 @OA\Property(property="email", type="string", example="juan@example.com"),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Doe"),
+     *                 @OA\Property(property="email", type="string", example="john@example.com"),
      *                 @OA\Property(property="phone_number", type="string", example="123-456-7890"),
-     *                 @OA\Property(property="address", type="string", example="123 Calle Principal"),
+     *                 @OA\Property(property="address", type="string", example="123 Main Street"),
      *                 @OA\Property(property="created_at", type="string", format="date-time"),
      *                 @OA\Property(
      *                     property="supervisor",
      *                     type="object",
      *                     nullable=true,
      *                     @OA\Property(property="id", type="integer", example=5),
-     *                     @OA\Property(property="first_name", type="string", example="Ana"),
-     *                     @OA\Property(property="last_name", type="string", example="García")
+     *                     @OA\Property(property="first_name", type="string", example="Anna"),
+     *                     @OA\Property(property="last_name", type="string", example="Garcia")
      *                 ),
      *                 @OA\Property(
      *                     property="shifts",
@@ -430,21 +430,21 @@ class EmployeeController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Empleado no encontrado",
+     *         description="Employee not found",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="No query results for model [App\\Models\\Employee] 99")
      *         )
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="No autenticado",
+     *         description="Unauthenticated",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Prohibido",
+     *         description="Forbidden",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Unauthorized. Insufficient permissions.")
      *         )
@@ -454,42 +454,154 @@ class EmployeeController extends ApiController
     public function show(string $id)
     {
         $employee = Employee::findOrFail($id);
-        
+
         // Load related data
-        $employee->load(['supervisor', 'shifts' => function($query) {
+        $employee->load(['supervisor', 'shifts' => function ($query) {
             $query->latest()->limit(10);
         }]);
-        
+
         return $this->successResponse($employee);
     }
 
     /**
-     * Display current employee's information.
+     * @OA\Get(
+     *     path="/api/employees/me",
+     *     summary="Get current employee details",
+     *     description="Retrieves the details of the currently authenticated employee",
+     *     operationId="getAuthenticatedEmployee",
+     *     tags={"Employees"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Authenticated employee details",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="user_id", type="integer", example=10),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Doe"),
+     *                 @OA\Property(property="email", type="string", example="john.doe@example.com"),
+     *                 @OA\Property(property="phone_number", type="string", example="123-456-7890"),
+     *                 @OA\Property(property="address", type="string", example="123 Main St"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time"),
+     *                 @OA\Property(
+     *                     property="supervisor",
+     *                     type="object",
+     *                     nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=5),
+     *                     @OA\Property(property="first_name", type="string", example="Jane"),
+     *                     @OA\Property(property="last_name", type="string", example="Smith")
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Unauthenticated")
+     *         )
+     *     )
+     * )
      */
     public function me(Request $request)
     {
         $user = $request->user();
         $employee = $user->employee;
-        
+
         if (!$employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
         }
-        
+
         // Load related data
-        $employee->load(['supervisor', 'shifts' => function($query) {
+        $employee->load(['supervisor', 'shifts' => function ($query) {
             $query->latest()->limit(10);
         }]);
-        
+
         return $this->successResponse($employee);
     }
 
     /**
-     * Update the specified employee.
+     * @OA\Put(
+     *     path="/api/employees/{id}",
+     *     summary="Update an employee",
+     *     description="Updates the details of a specific employee",
+     *     operationId="updateEmployee",
+     *     tags={"Employees"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Employee ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="first_name", type="string", example="John"),
+     *             @OA\Property(property="last_name", type="string", example="Smith"),
+     *             @OA\Property(property="email", type="string", example="john.smith@example.com"),
+     *             @OA\Property(property="phone_number", type="string", example="123-456-7890"),
+     *             @OA\Property(property="address", type="string", example="123 Updated St"),
+     *             @OA\Property(property="supervisor_id", type="integer", example=5, nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Employee updated successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Employee updated successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="first_name", type="string", example="John"),
+     *                 @OA\Property(property="last_name", type="string", example="Smith"),
+     *                 @OA\Property(property="email", type="string", example="john.smith@example.com"),
+     *                 @OA\Property(property="phone_number", type="string", example="123-456-7890"),
+     *                 @OA\Property(property="address", type="string", example="123 Updated St"),
+     *                 @OA\Property(property="supervisor_id", type="integer", example=5, nullable=true)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Employee not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Employee not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     )
+     * )
      */
     public function update(Request $request, string $id)
     {
         $employee = Employee::findOrFail($id);
-        
+
         $validator = Validator::make($request->all(), [
             'first_name' => 'sometimes|required|string|max:50',
             'last_name' => 'sometimes|required|string|max:50',
@@ -510,9 +622,9 @@ class EmployeeController extends ApiController
 
         try {
             DB::beginTransaction();
-            
+
             $employee->update($request->all());
-            
+
             // If user_id is provided, ensure the user has the employee role
             if ($request->filled('user_id') && $request->input('user_id') != $employee->user_id) {
                 $user = User::find($request->input('user_id'));
@@ -520,9 +632,9 @@ class EmployeeController extends ApiController
                     $user->update(['role' => 'employee']);
                 }
             }
-            
+
             DB::commit();
-            
+
             return $this->successResponse($employee, 'Employee updated successfully');
         } catch (\Exception $e) {
             DB::rollBack();
@@ -531,7 +643,66 @@ class EmployeeController extends ApiController
     }
 
     /**
-     * Assign a supervisor to an employee.
+     * @OA\Post(
+     *     path="/api/employees/{id}/assign-supervisor",
+     *     summary="Assign a supervisor to an employee",
+     *     description="Assigns or updates the supervisor for a specific employee",
+     *     operationId="assignSupervisor",
+     *     tags={"Employees"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Employee ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="supervisor_id", type="integer", example=3, description="The ID of the supervisor to assign")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Supervisor assigned successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Supervisor assigned successfully"),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="supervisor_id", type="integer", example=3)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Employee or Supervisor not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Employee or Supervisor not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Validation error"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     )
+     * )
      */
     public function assignSupervisor(Request $request, string $id)
     {
@@ -545,31 +716,69 @@ class EmployeeController extends ApiController
 
         $employee = Employee::findOrFail($id);
         $supervisor = Employee::findOrFail($request->input('supervisor_id'));
-        
+
         // Ensure the supervisor is actually a supervisor
         $supervisorUser = $supervisor->user;
         if (!$supervisorUser || !$supervisorUser->isSupervisor()) {
             return $this->errorResponse('The selected employee is not a supervisor.', 422);
         }
-        
+
         // Prevent assigning oneself as one's own supervisor
         if ($employee->id === $supervisor->id) {
             return $this->errorResponse('An employee cannot be their own supervisor.', 422);
         }
-        
+
         $employee->supervisor_id = $supervisor->id;
         $employee->save();
-        
+
         return $this->successResponse($employee, 'Supervisor assigned successfully');
     }
 
     /**
-     * Remove the specified employee.
+     * @OA\Delete(
+     *     path="/api/employees/{id}",
+     *     summary="Delete an employee",
+     *     description="Deletes a specific employee by ID",
+     *     operationId="deleteEmployee",
+     *     tags={"Employees"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="Employee ID",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Employee deleted successfully",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="message", type="string", example="Employee deleted successfully")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Employee not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Employee not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Unauthorized")
+     *         )
+     *     )
+     * )
      */
     public function destroy(string $id)
     {
         $employee = Employee::findOrFail($id);
-        
+
         try {
             $employee->delete();
             return $this->successResponse(null, 'Employee deleted successfully');

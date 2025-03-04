@@ -6,7 +6,7 @@ namespace App\Swagger;
  * @OA\Info(
  *     title="Shift Management API",
  *     version="1.0.0",
- *     description="API para sistema de gestión de turnos y empleados",
+ *     description="API for shift and employee management system",
  *     @OA\Contact(
  *         email="admin@example.com",
  *         name="API Support"
