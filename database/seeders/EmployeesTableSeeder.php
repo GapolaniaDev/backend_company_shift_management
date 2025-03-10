@@ -32,13 +32,16 @@ class EmployeesTableSeeder extends Seeder
             ['name' => 'Tomas Casallas', 'email' => 'dkrajcik@example.net'],
             ['name' => 'Paula Sanchez', 'email' => 'oreilly.herminio@example.com']
         ];
-
+        $userIdCounter = 1;
+        $supervisorCode = 1;
         foreach ($employees as $employee) {
             $names = explode(' ', $employee['name']);
             $firstName = array_shift($names);
             $lastName = implode(' ', $names);
 
             DB::table('employees')->insert([
+                'user_id' => $userIdCounter,
+                'supervisor_id' => $supervisorCode,
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'email' => $employee['email'],
@@ -47,6 +50,8 @@ class EmployeesTableSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
+            $userIdCounter++;
+
         }
     }
 }

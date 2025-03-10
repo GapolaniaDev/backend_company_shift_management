@@ -658,13 +658,6 @@ class ShiftController extends ApiController
      *                     type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="Morning Shift")
-     *                 ),
-     *                 @OA\Property(
-     *                     property="image_profile",
-     *                     type="object",
-     *                     @OA\Property(property="text_profile", type="string", example="JP"),
-     *                     @OA\Property(property="text_color", type="string", example="1D5A73"),
-     *                     @OA\Property(property="background_color", type="string", example="E6F1F5")
      *                 )
      *             )
      *         )
@@ -703,12 +696,6 @@ class ShiftController extends ApiController
         if (!$shift) {
             return $this->errorResponse('No shift found for today', 404);
         }
-
-        // Add profile image data
-        $shift->image_profile = $this->generateProfileTextAndColor(
-            $employee->first_name,
-            $employee->last_name
-        );
 
         return $this->successResponse($shift);
     }
