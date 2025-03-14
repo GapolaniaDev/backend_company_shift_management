@@ -68,6 +68,8 @@ class ShiftsTableSeeder extends Seeder
                         'created_at' => now(),
                         'location_lat' => $locationLat, // Added field
                         'location_lng' => $locationLng, // Added field
+                        'radius' => '100',
+                        'zoom' => '15'
                     ]);
                 }
             }
