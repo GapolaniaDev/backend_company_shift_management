@@ -30,6 +30,7 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="clock_on_lng", type="number", format="float", nullable=true, example=-122.419, description="Clock-in longitude"),
  *     @OA\Property(property="clock_off_lat", type="number", format="float", nullable=true, example=37.775, description="Clock-out latitude"),
  *     @OA\Property(property="clock_off_lng", type="number", format="float", nullable=true, example=-122.419, description="Clock-out longitude"),
+ *     @OA\Property(property="state", type="integer", enum={0, 1, 2}, example=0, description="Shift state: 0=not_started, 1=started, 2=finished"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Timestamp when record was created"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Timestamp when record was last updated"),
  *     @OA\Property(
@@ -62,6 +63,13 @@ class Shift extends Model
 {
     use HasFactory;
 
+    /**
+     * State constants for shifts
+     */
+    const STATE_NOT_STARTED = 0;
+    const STATE_STARTED = 1;
+    const STATE_FINISHED = 2;
+
     protected $fillable = [
         'shift_type_id',
         'employee_id',
@@ -79,13 +87,39 @@ class Shift extends Model
         'clock_off_time',
         'radius',
         'zoom',
+        'state',
     ];
 
     protected $casts = [
         'date_start' => 'datetime',
         'date_end' => 'datetime',
         'total_hours' => 'decimal:2',
+        'state' => 'integer',
     ];
+    
+    /**
+     * Bootstrap any model events.
+     */
+    protected static function boot()
+    {
+        parent::boot();
+        
+        // Auto-update state based on clock_on_time and clock_off_time
+        static::saving(function ($shift) {
+            // If clock_off_time is set, set state to FINISHED
+            if ($shift->clock_off_time) {
+                $shift->state = self::STATE_FINISHED;
+            } 
+            // If clock_on_time is set but clock_off_time is not, set state to STARTED
+            else if ($shift->clock_on_time) {
+                $shift->state = self::STATE_STARTED;
+            } 
+            // If neither is set, set state to NOT_STARTED
+            else {
+                $shift->state = self::STATE_NOT_STARTED;
+            }
+        });
+    }
 
     public function shiftType()
     {

@@ -814,6 +814,7 @@ class ShiftController extends ApiController
                     'clock_on_lat' => $request->lat,
                     'clock_on_lng' => $request->lng,
                     'clock_on_time' => now(),
+                    'state' => Shift::STATE_STARTED,
                 ]);
             } else {
                 if (!$shift->clock_on_time) {
@@ -824,6 +825,7 @@ class ShiftController extends ApiController
                     'clock_off_lat' => $request->lat,
                     'clock_off_lng' => $request->lng,
                     'clock_off_time' => now(),
+                    'state' => Shift::STATE_FINISHED,
                 ]);
             }
 
