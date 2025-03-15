@@ -13,8 +13,10 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="id", type="integer", format="int64", example=1, description="Unique identifier"),
  *     @OA\Property(property="shift_type_id", type="integer", example=2, description="Associated shift type ID"),
  *     @OA\Property(property="employee_id", type="integer", example=5, description="Assigned employee ID"),
- *     @OA\Property(property="date_start", type="string", format="date-time", example="2025-03-10T09:00:00Z", description="Shift start date and time"),
- *     @OA\Property(property="date_end", type="string", format="date-time", example="2025-03-10T17:00:00Z", description="Shift end date and time"),
+ *     @OA\Property(property="date_start", type="string", format="date-time", example="2025-03-10T09:00:00Z", description="Shift start date and time (UTC)"),
+ *     @OA\Property(property="date_end", type="string", format="date-time", example="2025-03-10T17:00:00Z", description="Shift end date and time (UTC)"),
+ *     @OA\Property(property="date_start_timezone", type="string", nullable=true, example="America/New_York", description="Timezone for shift start calculated from coordinates"),
+ *     @OA\Property(property="date_end_timezone", type="string", nullable=true, example="America/New_York", description="Timezone for shift end calculated from coordinates"),
  *     @OA\Property(property="total_hours", type="number", format="float", example=8.5, description="Total scheduled hours"),
  *     @OA\Property(property="weekday_code", type="integer", example=1, description="Day of week (0=Sunday, 6=Saturday)"),
  *     @OA\Property(property="comments", type="string", nullable=true, example="Cover for John", description="Additional shift notes"),
@@ -30,6 +32,8 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="clock_on_lng", type="number", format="float", nullable=true, example=-122.419, description="Clock-in longitude"),
  *     @OA\Property(property="clock_off_lat", type="number", format="float", nullable=true, example=37.775, description="Clock-out latitude"),
  *     @OA\Property(property="clock_off_lng", type="number", format="float", nullable=true, example=-122.419, description="Clock-out longitude"),
+ *     @OA\Property(property="timezone_start", type="string", nullable=true, example="America/New_York", description="Timezone where the clock-on occurred"),
+ *     @OA\Property(property="timezone_end", type="string", nullable=true, example="America/Los_Angeles", description="Timezone where the clock-off occurred"),
  *     @OA\Property(property="state", type="integer", enum={0, 1, 2}, example=0, description="Shift state: 0=not_started, 1=started, 2=finished"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Timestamp when record was created"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Timestamp when record was last updated"),
@@ -75,6 +79,8 @@ class Shift extends Model
         'employee_id',
         'date_start',
         'date_end',
+        'date_start_timezone',
+        'date_end_timezone',
         'total_hours',
         'weekday_code',
         'comments',
@@ -85,6 +91,8 @@ class Shift extends Model
         'clock_off_lng',
         'clock_on_time',
         'clock_off_time',
+        'timezone_start',
+        'timezone_end',
         'radius',
         'zoom',
         'state',
@@ -93,6 +101,8 @@ class Shift extends Model
     protected $casts = [
         'date_start' => 'datetime',
         'date_end' => 'datetime',
+        'clock_on_time' => 'datetime',
+        'clock_off_time' => 'datetime',
         'total_hours' => 'decimal:2',
         'state' => 'integer',
     ];
@@ -205,6 +215,66 @@ class Shift extends Model
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
         return $earthRadius * $c;
+    }
+    
+    /**
+     * Get the clock-on time in the original timezone
+     * 
+     * @return \Carbon\Carbon|null
+     */
+    public function getLocalClockOnTime()
+    {
+        if (!$this->clock_on_time) {
+            return null;
+        }
+        
+        $timezone = $this->timezone_start ?: 'UTC';
+        return $this->clock_on_time->copy()->setTimezone($timezone);
+    }
+    
+    /**
+     * Get the clock-off time in the original timezone
+     * 
+     * @return \Carbon\Carbon|null
+     */
+    public function getLocalClockOffTime()
+    {
+        if (!$this->clock_off_time) {
+            return null;
+        }
+        
+        $timezone = $this->timezone_end ?: 'UTC';
+        return $this->clock_off_time->copy()->setTimezone($timezone);
+    }
+    
+    /**
+     * Get the shift start time in the saved timezone
+     * 
+     * @return \Carbon\Carbon|null
+     */
+    public function getLocalStartTime()
+    {
+        if (!$this->date_start) {
+            return null;
+        }
+        
+        $timezone = $this->date_start_timezone ?: 'UTC';
+        return $this->date_start->copy()->setTimezone($timezone);
+    }
+    
+    /**
+     * Get the shift end time in the saved timezone
+     * 
+     * @return \Carbon\Carbon|null
+     */
+    public function getLocalEndTime()
+    {
+        if (!$this->date_end) {
+            return null;
+        }
+        
+        $timezone = $this->date_end_timezone ?: 'UTC';
+        return $this->date_end->copy()->setTimezone($timezone);
     }
 
 }

@@ -442,6 +442,8 @@ class ShiftController extends ApiController
             'total_hours' => 'required|numeric|min:0',
             'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:1000',
+            'latitude' => 'required_with:longitude|numeric',
+            'longitude' => 'required_with:latitude|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -449,11 +451,124 @@ class ShiftController extends ApiController
         }
 
         try {
-            $shift = Shift::create($request->all());
+            $data = $request->all();
+
+            // Asegurar que las fechas estén en UTC
+            if (isset($data['date_start'])) {
+                $data['date_start'] = Carbon::parse($data['date_start'])->setTimezone('UTC');
+            }
+            
+            if (isset($data['date_end'])) {
+                $data['date_end'] = Carbon::parse($data['date_end'])->setTimezone('UTC');
+            }
+
+            // Calcular timezone basado en coordenadas
+            if ($request->has('latitude') && $request->has('longitude')) {
+                $timezone = $this->getTimezoneFromCoordinates($request->latitude, $request->longitude);
+                $data['date_start_timezone'] = $timezone;
+                $data['date_end_timezone'] = $timezone;
+            }
+
+            $shift = Shift::create($data);
 
             return $this->successResponse($shift, 'Shift created successfully', 201);
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to create shift: ' . $e->getMessage(), 500);
+        }
+    }
+    
+    /**
+     * Get timezone from coordinates using TimeZoneDB API
+     * 
+     * @param float $latitude
+     * @param float $longitude
+     * @return string Timezone name (e.g. 'America/New_York') or 'UTC' if not found
+     */
+    private function getTimezoneFromCoordinates($latitude, $longitude)
+    {
+        try {
+            // Primero intentamos obtener el timezone con este método que no requiere API externa
+            $timezone = $this->getTimezoneFromCoordinatesLocal($latitude, $longitude);
+            if ($timezone) {
+                return $timezone;
+            }
+            
+            // Si el método local falla, intentamos con la API de TimeZoneDB
+            $apiKey = env('TIMEZONEDB_API_KEY', ''); // API key de TimeZoneDB
+            
+            if (empty($apiKey)) {
+                // Si no hay API key, intentamos con otra API gratuita
+                $url = "https://api.ipgeolocation.io/timezone?lat={$latitude}&long={$longitude}";
+                $response = file_get_contents($url);
+                $data = json_decode($response, true);
+                
+                if (isset($data['timezone']) && !empty($data['timezone'])) {
+                    return $data['timezone'];
+                }
+                
+                // Si todo falla, devolvemos UTC
+                return 'UTC';
+            }
+            
+            $url = "http://api.timezonedb.com/v2.1/get-time-zone?key={$apiKey}&format=json&by=position&lat={$latitude}&lng={$longitude}";
+            $response = file_get_contents($url);
+            $data = json_decode($response, true);
+            
+            if ($data && isset($data['status']) && $data['status'] === 'OK' && isset($data['zoneName'])) {
+                return $data['zoneName'];
+            }
+            
+            // Si falla, devolvemos UTC
+            return 'UTC';
+        } catch (\Exception $e) {
+            // En caso de error, devolvemos UTC
+            return 'UTC';
+        }
+    }
+    
+    /**
+     * Get timezone from coordinates using PHP's DateTimeZone class
+     * This method does not require external APIs but is less accurate
+     * 
+     * @param float $latitude
+     * @param float $longitude
+     * @return string|null Timezone name or null if not found
+     */
+    private function getTimezoneFromCoordinatesLocal($latitude, $longitude)
+    {
+        try {
+            // Get all timezone identifiers
+            $timezones = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL);
+            
+            // Set a very large distance initially
+            $minDistance = PHP_INT_MAX;
+            $closestTimezone = null;
+            
+            // Loop through each timezone
+            foreach ($timezones as $timezone) {
+                $tz = new \DateTimeZone($timezone);
+                $location = $tz->getLocation();
+                
+                if (!$location) {
+                    continue;
+                }
+                
+                $tzLatitude = $location['latitude'];
+                $tzLongitude = $location['longitude'];
+                
+                // Calculate the distance between input coordinates and timezone coordinates
+                $distance = $this->calculateDistance($latitude, $longitude, $tzLatitude, $tzLongitude);
+                
+                // Update closest timezone if this one is closer
+                if ($distance < $minDistance) {
+                    $minDistance = $distance;
+                    $closestTimezone = $timezone;
+                }
+            }
+            
+            return $closestTimezone;
+        } catch (\Exception $e) {
+            return null;
         }
     }
 
@@ -528,6 +643,24 @@ class ShiftController extends ApiController
             $shift->employee->first_name,
             $shift->employee->last_name
         );
+        
+        // Add local times in their respective timezones
+        if ($shift->clock_on_time) {
+            $shift->local_clock_on_time = $shift->getLocalClockOnTime()->toDateTimeString();
+        }
+        
+        if ($shift->clock_off_time) {
+            $shift->local_clock_off_time = $shift->getLocalClockOffTime()->toDateTimeString();
+        }
+        
+        // Add shift start/end times in their local timezones
+        if ($shift->date_start) {
+            $shift->local_date_start = $shift->getLocalStartTime()->toDateTimeString();
+        }
+        
+        if ($shift->date_end) {
+            $shift->local_date_end = $shift->getLocalEndTime()->toDateTimeString();
+        }
 
         return $this->successResponse($shift);
     }
@@ -578,6 +711,8 @@ class ShiftController extends ApiController
             'total_hours' => 'sometimes|required|numeric|min:0',
             'location' => 'nullable|string|max:255',
             'notes' => 'nullable|string|max:1000',
+            'latitude' => 'sometimes|required_with:longitude|numeric',
+            'longitude' => 'sometimes|required_with:latitude|numeric',
         ]);
 
         if ($validator->fails()) {
@@ -585,7 +720,25 @@ class ShiftController extends ApiController
         }
 
         try {
-            $shift->update($request->all());
+            $data = $request->all();
+
+            // Asegurar que las fechas estén en UTC
+            if (isset($data['date_start'])) {
+                $data['date_start'] = Carbon::parse($data['date_start'])->setTimezone('UTC');
+            }
+            
+            if (isset($data['date_end'])) {
+                $data['date_end'] = Carbon::parse($data['date_end'])->setTimezone('UTC');
+            }
+
+            // Calcular timezone basado en coordenadas si se proporcionaron nuevas
+            if ($request->has('latitude') && $request->has('longitude')) {
+                $timezone = $this->getTimezoneFromCoordinates($request->latitude, $request->longitude);
+                $data['date_start_timezone'] = $timezone;
+                $data['date_end_timezone'] = $timezone;
+            }
+
+            $shift->update($data);
 
             return $this->successResponse($shift, 'Shift updated successfully');
         } catch (\Exception $e) {
@@ -719,10 +872,11 @@ class ShiftController extends ApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"lat", "lng", "type"},
+     *             required={"lat", "lng", "type", "timezone"},
      *             @OA\Property(property="lat", type="number", format="float", example=19.4326),
      *             @OA\Property(property="lng", type="number", format="float", example=-99.1332),
-     *             @OA\Property(property="type", type="string", enum={"clock_on", "clock_off"}, example="clock_on", description="Type of record: clock in or clock out")
+     *             @OA\Property(property="type", type="string", enum={"clock_on", "clock_off"}, example="clock_on", description="Type of record: clock in or clock out"),
+     *             @OA\Property(property="timezone", type="string", example="America/New_York", description="The timezone where the employee is located at clock time")
      *         )
      *     ),
      *     @OA\Response(
@@ -737,6 +891,10 @@ class ShiftController extends ApiController
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="clock_on_time", type="string", format="date-time"),
      *                 @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(property="timezone_start", type="string", example="America/New_York"),
+     *                 @OA\Property(property="timezone_end", type="string", example="America/Los_Angeles", nullable=true),
+     *                 @OA\Property(property="local_clock_on_time", type="string", format="date-time"),
+     *                 @OA\Property(property="local_clock_off_time", type="string", format="date-time", nullable=true),
      *                 @OA\Property(property="clock_on_lat", type="number", format="float", example=19.4326),
      *                 @OA\Property(property="clock_on_lng", type="number", format="float", example=-99.1332),
      *                 @OA\Property(property="clock_off_lat", type="number", format="float", nullable=true),
@@ -778,6 +936,7 @@ class ShiftController extends ApiController
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
             'type' => 'required|in:clock_on,clock_off',
+            'timezone' => 'required|string|max:64',
         ]);
 
         if ($validator->fails()) {
@@ -810,10 +969,12 @@ class ShiftController extends ApiController
                     return $this->errorResponse('Clock on cannot be updated after clock off', 422);
                 }
 
+                // Store the time in UTC but include the timezone information
                 $shift->update([
                     'clock_on_lat' => $request->lat,
                     'clock_on_lng' => $request->lng,
-                    'clock_on_time' => now(),
+                    'clock_on_time' => now()->setTimezone('UTC'),
+                    'timezone_start' => $request->timezone,
                     'state' => Shift::STATE_STARTED,
                 ]);
             } else {
@@ -821,15 +982,24 @@ class ShiftController extends ApiController
                     return $this->errorResponse('Clock off cannot happen before clock on', 422);
                 }
 
+                // Store the time in UTC but include the timezone information
                 $shift->update([
                     'clock_off_lat' => $request->lat,
                     'clock_off_lng' => $request->lng,
-                    'clock_off_time' => now(),
+                    'clock_off_time' => now()->setTimezone('UTC'),
+                    'timezone_end' => $request->timezone,
                     'state' => Shift::STATE_FINISHED,
                 ]);
             }
 
             DB::commit();
+            
+            // Add the local time in the response to show the correct time in the user's timezone
+            if ($request->type === 'clock_on' && $shift->clock_on_time) {
+                $shift->local_clock_on_time = $shift->getLocalClockOnTime()->toDateTimeString();
+            } else if ($request->type === 'clock_off' && $shift->clock_off_time) {
+                $shift->local_clock_off_time = $shift->getLocalClockOffTime()->toDateTimeString();
+            }
 
             return $this->successResponse($shift, $request->type === 'clock_on' ? 'Clock in successful' : 'Clock out successful');
         } catch (\Exception $e) {

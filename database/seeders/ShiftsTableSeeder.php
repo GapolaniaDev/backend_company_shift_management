@@ -61,6 +61,8 @@ class ShiftsTableSeeder extends Seeder
                         'employee_id' => $employeeId,
                         'date_start' => $startTime,
                         'date_end' => $endTime,
+                        'date_start_timezone' => 'Australia/Adelaide', // Timezone para Adelaide
+                        'date_end_timezone' => 'Australia/Adelaide', // Timezone para Adelaide
                         'total_hours' => $hours,
                         'weekday_code' => $startDate->format('D'),
                         'comments' => $faker->sentence(),
