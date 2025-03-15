@@ -3411,6 +3411,210 @@
                 ]
             }
         },
+        "/api/shifts/shift-history": {
+            "get": {
+                "tags": [
+                    "Shifts"
+                ],
+                "summary": "Get shift history and date summary",
+                "description": "Retrieves the current shift for a specific date, history of the 10 most recent shifts, and date summary with shift counts for a 7-day range (3 days before and 3 days after the specified date)",
+                "operationId": "getShiftHistory",
+                "parameters": [
+                    {
+                        "name": "date",
+                        "in": "query",
+                        "description": "Date to retrieve shift for (YYYY-MM-DD)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Shift history data",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "current_shift": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "date_start": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-03-10T09:00:00Z"
+                                                        },
+                                                        "date_start_timezone": {
+                                                            "type": "string",
+                                                            "example": "Australia/Adelaide"
+                                                        },
+                                                        "date_end": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-03-10T17:00:00Z"
+                                                        },
+                                                        "date_end_timezone": {
+                                                            "type": "string",
+                                                            "example": "Australia/Adelaide"
+                                                        },
+                                                        "total_hours": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 8
+                                                        },
+                                                        "weekday_code": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "comments": {
+                                                            "type": "string",
+                                                            "example": "Turno realizado sin problemas",
+                                                            "nullable": true
+                                                        },
+                                                        "local_date_start": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-03-10T09:00:00Z"
+                                                        },
+                                                        "local_date_end": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2025-03-10T17:00:00Z"
+                                                        },
+                                                        "state": {
+                                                            "type": "integer",
+                                                            "example": 0
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "shift_history": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "date_start": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-03-09T09:00:00Z"
+                                                            },
+                                                            "date_start_timezone": {
+                                                                "type": "string",
+                                                                "example": "Australia/Adelaide"
+                                                            },
+                                                            "date_end": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-03-09T17:00:00Z"
+                                                            },
+                                                            "date_end_timezone": {
+                                                                "type": "string",
+                                                                "example": "Australia/Adelaide"
+                                                            },
+                                                            "total_hours": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 8
+                                                            },
+                                                            "weekday_code": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "comments": {
+                                                                "type": "string",
+                                                                "example": "Turno muy productivo",
+                                                                "nullable": true
+                                                            },
+                                                            "local_date_start": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-03-09T09:00:00Z"
+                                                            },
+                                                            "local_date_end": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "example": "2025-03-09T17:00:00Z"
+                                                            },
+                                                            "state": {
+                                                                "type": "integer",
+                                                                "example": 2
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "date_summary": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "date": {
+                                                                "type": "string",
+                                                                "format": "date",
+                                                                "example": "2025-03-07"
+                                                            },
+                                                            "total_shifts": {
+                                                                "type": "integer",
+                                                                "example": 0
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "User has no employee profile",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Your user account is not linked to an employee profile."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthenticated"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/generate-next-fortnight-shifts": {
             "get": {
                 "tags": [

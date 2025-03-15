@@ -457,7 +457,7 @@ class ShiftController extends ApiController
             if (isset($data['date_start'])) {
                 $data['date_start'] = Carbon::parse($data['date_start'])->setTimezone('UTC');
             }
-            
+
             if (isset($data['date_end'])) {
                 $data['date_end'] = Carbon::parse($data['date_end'])->setTimezone('UTC');
             }
@@ -476,10 +476,10 @@ class ShiftController extends ApiController
             return $this->errorResponse('Failed to create shift: ' . $e->getMessage(), 500);
         }
     }
-    
+
     /**
      * Get timezone from coordinates using TimeZoneDB API
-     * 
+     *
      * @param float $latitude
      * @param float $longitude
      * @return string Timezone name (e.g. 'America/New_York') or 'UTC' if not found
@@ -492,32 +492,32 @@ class ShiftController extends ApiController
             if ($timezone) {
                 return $timezone;
             }
-            
+
             // Si el método local falla, intentamos con la API de TimeZoneDB
             $apiKey = env('TIMEZONEDB_API_KEY', ''); // API key de TimeZoneDB
-            
+
             if (empty($apiKey)) {
                 // Si no hay API key, intentamos con otra API gratuita
                 $url = "https://api.ipgeolocation.io/timezone?lat={$latitude}&long={$longitude}";
                 $response = file_get_contents($url);
                 $data = json_decode($response, true);
-                
+
                 if (isset($data['timezone']) && !empty($data['timezone'])) {
                     return $data['timezone'];
                 }
-                
+
                 // Si todo falla, devolvemos UTC
                 return 'UTC';
             }
-            
+
             $url = "http://api.timezonedb.com/v2.1/get-time-zone?key={$apiKey}&format=json&by=position&lat={$latitude}&lng={$longitude}";
             $response = file_get_contents($url);
             $data = json_decode($response, true);
-            
+
             if ($data && isset($data['status']) && $data['status'] === 'OK' && isset($data['zoneName'])) {
                 return $data['zoneName'];
             }
-            
+
             // Si falla, devolvemos UTC
             return 'UTC';
         } catch (\Exception $e) {
@@ -525,11 +525,11 @@ class ShiftController extends ApiController
             return 'UTC';
         }
     }
-    
+
     /**
      * Get timezone from coordinates using PHP's DateTimeZone class
      * This method does not require external APIs but is less accurate
-     * 
+     *
      * @param float $latitude
      * @param float $longitude
      * @return string|null Timezone name or null if not found
@@ -539,33 +539,33 @@ class ShiftController extends ApiController
         try {
             // Get all timezone identifiers
             $timezones = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL);
-            
+
             // Set a very large distance initially
             $minDistance = PHP_INT_MAX;
             $closestTimezone = null;
-            
+
             // Loop through each timezone
             foreach ($timezones as $timezone) {
                 $tz = new \DateTimeZone($timezone);
                 $location = $tz->getLocation();
-                
+
                 if (!$location) {
                     continue;
                 }
-                
+
                 $tzLatitude = $location['latitude'];
                 $tzLongitude = $location['longitude'];
-                
+
                 // Calculate the distance between input coordinates and timezone coordinates
                 $distance = $this->calculateDistance($latitude, $longitude, $tzLatitude, $tzLongitude);
-                
+
                 // Update closest timezone if this one is closer
                 if ($distance < $minDistance) {
                     $minDistance = $distance;
                     $closestTimezone = $timezone;
                 }
             }
-            
+
             return $closestTimezone;
         } catch (\Exception $e) {
             return null;
@@ -643,21 +643,21 @@ class ShiftController extends ApiController
             $shift->employee->first_name,
             $shift->employee->last_name
         );
-        
+
         // Add local times in their respective timezones
         if ($shift->clock_on_time) {
             $shift->local_clock_on_time = $shift->getLocalClockOnTime()->toDateTimeString();
         }
-        
+
         if ($shift->clock_off_time) {
             $shift->local_clock_off_time = $shift->getLocalClockOffTime()->toDateTimeString();
         }
-        
+
         // Add shift start/end times in their local timezones
         if ($shift->date_start) {
             $shift->local_date_start = $shift->getLocalStartTime()->toDateTimeString();
         }
-        
+
         if ($shift->date_end) {
             $shift->local_date_end = $shift->getLocalEndTime()->toDateTimeString();
         }
@@ -726,7 +726,7 @@ class ShiftController extends ApiController
             if (isset($data['date_start'])) {
                 $data['date_start'] = Carbon::parse($data['date_start'])->setTimezone('UTC');
             }
-            
+
             if (isset($data['date_end'])) {
                 $data['date_end'] = Carbon::parse($data['date_end'])->setTimezone('UTC');
             }
@@ -993,7 +993,7 @@ class ShiftController extends ApiController
             }
 
             DB::commit();
-            
+
             // Add the local time in the response to show the correct time in the user's timezone
             if ($request->type === 'clock_on' && $shift->clock_on_time) {
                 $shift->local_clock_on_time = $shift->getLocalClockOnTime()->toDateTimeString();
@@ -1040,12 +1040,49 @@ class ShiftController extends ApiController
         $index = $hashValue % count($this->backgroundColors);
         return $this->backgroundColors[$index];
     }
-    
+
+    /**
+     * Transform a shift object to include only required fields
+     * 
+     * @param \App\Models\Shift $shift
+     * @return array
+     */
+    private function transformShift($shift)
+    {
+        if (!$shift) {
+            return null;
+        }
+
+        // Add local times if they don't exist yet
+        if ($shift->date_start && !isset($shift->local_date_start)) {
+            $shift->local_date_start = $shift->getLocalStartTime()->toDateTimeString();
+        }
+
+        if ($shift->date_end && !isset($shift->local_date_end)) {
+            $shift->local_date_end = $shift->getLocalEndTime()->toDateTimeString();
+        }
+        
+        // Return only the required fields
+        return [
+            'id' => $shift->id,
+            'date_start' => $shift->date_start,
+            'date_start_timezone' => $shift->date_start_timezone,
+            'date_end' => $shift->date_end,
+            'date_end_timezone' => $shift->date_end_timezone,
+            'total_hours' => $shift->total_hours,
+            'weekday_code' => $shift->weekday_code,
+            'comments' => $shift->comments,
+            'local_date_start' => $shift->local_date_start ?? null,
+            'local_date_end' => $shift->local_date_end ?? null,
+            'state' => $shift->state,
+        ];
+    }
+
     /**
      * @OA\Get(
      *     path="/api/shifts/shift-history",
      *     summary="Get shift history and date summary",
-     *     description="Retrieves the current shift for a specific date, history of completed shifts, and date summary with shift counts",
+     *     description="Retrieves the current shift for a specific date, history of the 10 most recent shifts, and date summary with shift counts for a 7-day range (3 days before and 3 days after the specified date)",
      *     operationId="getShiftHistory",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
@@ -1073,15 +1110,12 @@ class ShiftController extends ApiController
      *                     @OA\Property(property="date_start_timezone", type="string", example="Australia/Adelaide"),
      *                     @OA\Property(property="date_end", type="string", format="date-time", example="2025-03-10T17:00:00Z"),
      *                     @OA\Property(property="date_end_timezone", type="string", example="Australia/Adelaide"),
-     *                     @OA\Property(property="location_lat", type="number", format="float", example=-34.9285),
-     *                     @OA\Property(property="location_lng", type="number", format="float", example=138.6007),
-     *                     @OA\Property(property="clock_on_time", type="string", format="date-time", nullable=true),
-     *                     @OA\Property(property="timezone_start", type="string", nullable=true, example="Australia/Adelaide"),
-     *                     @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
-     *                     @OA\Property(property="timezone_end", type="string", nullable=true, example="Australia/Adelaide"),
-     *                     @OA\Property(property="state", type="integer", example=0),
+     *                     @OA\Property(property="total_hours", type="number", format="float", example=8),
+     *                     @OA\Property(property="weekday_code", type="integer", example=1),
      *                     @OA\Property(property="comments", type="string", nullable=true, example="Turno realizado sin problemas"),
-     *                     @OA\Property(property="total_hours", type="number", format="float", example=8)
+     *                     @OA\Property(property="local_date_start", type="string", format="date-time", example="2025-03-10T09:00:00Z"),
+     *                     @OA\Property(property="local_date_end", type="string", format="date-time", example="2025-03-10T17:00:00Z"),
+     *                     @OA\Property(property="state", type="integer", example=0)
      *                 ),
      *                 @OA\Property(
      *                     property="shift_history",
@@ -1093,15 +1127,12 @@ class ShiftController extends ApiController
      *                         @OA\Property(property="date_start_timezone", type="string", example="Australia/Adelaide"),
      *                         @OA\Property(property="date_end", type="string", format="date-time", example="2025-03-09T17:00:00Z"),
      *                         @OA\Property(property="date_end_timezone", type="string", example="Australia/Adelaide"),
-     *                         @OA\Property(property="location_lat", type="number", format="float", example=-34.9285),
-     *                         @OA\Property(property="location_lng", type="number", format="float", example=138.6007),
-     *                         @OA\Property(property="clock_on_time", type="string", format="date-time", nullable=true),
-     *                         @OA\Property(property="timezone_start", type="string", nullable=true, example="Australia/Adelaide"),
-     *                         @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
-     *                         @OA\Property(property="timezone_end", type="string", nullable=true, example="Australia/Adelaide"),
-     *                         @OA\Property(property="state", type="integer", example=2),
+     *                         @OA\Property(property="total_hours", type="number", format="float", example=8),
+     *                         @OA\Property(property="weekday_code", type="integer", example=1),
      *                         @OA\Property(property="comments", type="string", nullable=true, example="Turno muy productivo"),
-     *                         @OA\Property(property="total_hours", type="number", format="float", example=8)
+     *                         @OA\Property(property="local_date_start", type="string", format="date-time", example="2025-03-09T09:00:00Z"),
+     *                         @OA\Property(property="local_date_end", type="string", format="date-time", example="2025-03-09T17:00:00Z"),
+     *                         @OA\Property(property="state", type="integer", example=2)
      *                     )
      *                 ),
      *                 @OA\Property(
@@ -1109,7 +1140,7 @@ class ShiftController extends ApiController
      *                     type="array",
      *                     @OA\Items(
      *                         type="object",
-     *                         @OA\Property(property="date", type="string", format="date", example="2025-03-03"),
+     *                         @OA\Property(property="date", type="string", format="date", example="2025-03-07"),
      *                         @OA\Property(property="total_shifts", type="integer", example=0)
      *                     )
      *                 )
@@ -1140,14 +1171,14 @@ class ShiftController extends ApiController
         }
 
         // Get date parameter or use current date
-        $date = $request->has('date') 
-            ? Carbon::parse($request->input('date'))->startOfDay() 
+        $date = $request->has('date')
+            ? Carbon::parse($request->input('date'))->startOfDay()
             : Carbon::now()->startOfDay();
-        
-        // Calculate date range (7 days before and 7 days after)
-        $startRange = (clone $date)->subDays(7);
-        $endRange = (clone $date)->addDays(7);
-        
+
+        // Calculate date range (3 days before and 3 days after)
+        $startRange = (clone $date)->subDays(3);
+        $endRange = (clone $date)->addDays(3);
+
         // Current shift for the specified date
         $currentShift = Shift::with(['shiftType'])
             ->where('employee_id', $employee->id)
@@ -1155,85 +1186,68 @@ class ShiftController extends ApiController
             ->whereDate('date_end', '>=', $date)
             ->first();
 
-        // Initialize shift history
-        $shiftHistory = [];
-        
-        // Only get shift history if no specific date was filtered (first load)
-        if (!$request->has('date')) {
-            // Get the 10 most recent completed shifts
-            $shiftHistory = Shift::with(['shiftType'])
-                ->where('employee_id', $employee->id)
-                ->where('state', Shift::STATE_FINISHED)
-                ->whereNotNull('clock_off_time')
-                ->orderBy('date_end', 'desc')
-                ->limit(10)
-                ->get();
-        }
-        
+        // Get the 10 most recent shifts from any date until the current date
+        $shiftHistory = Shift::with(['shiftType'])
+            ->where('employee_id', $employee->id)
+            ->whereDate('date_end', '<=', now()) // Solo turnos hasta la fecha actual
+            ->orderBy('date_end', 'desc')
+            ->limit(10)
+            ->get();
+
         // Generate date summary array
         $dateSummary = [];
         $currentDate = clone $startRange;
-        
+
         // Count shifts for each day in the date range
         while ($currentDate <= $endRange) {
             $dateStr = $currentDate->format('Y-m-d');
-            
+
             // Count shifts for this day
             $shiftsCount = Shift::where('employee_id', $employee->id)
                 ->whereDate('date_start', '<=', $dateStr)
                 ->whereDate('date_end', '>=', $dateStr)
                 ->count();
-            
+
             $dateSummary[] = [
                 'date' => $dateStr,
                 'total_shifts' => $shiftsCount
             ];
-            
+
             $currentDate->addDay();
         }
-        
+
         // Process data for the response
         if ($currentShift) {
             // Add local times
             if ($currentShift->date_start) {
                 $currentShift->local_date_start = $currentShift->getLocalStartTime()->toDateTimeString();
             }
-            
+
             if ($currentShift->date_end) {
                 $currentShift->local_date_end = $currentShift->getLocalEndTime()->toDateTimeString();
             }
-            
-            if ($currentShift->clock_on_time) {
-                $currentShift->local_clock_on_time = $currentShift->getLocalClockOnTime()->toDateTimeString();
-            }
-            
-            if ($currentShift->clock_off_time) {
-                $currentShift->local_clock_off_time = $currentShift->getLocalClockOffTime()->toDateTimeString();
-            }
         }
-        
+
         // Add local times to history shifts
         foreach ($shiftHistory as $shift) {
             if ($shift->date_start) {
                 $shift->local_date_start = $shift->getLocalStartTime()->toDateTimeString();
             }
-            
+
             if ($shift->date_end) {
                 $shift->local_date_end = $shift->getLocalEndTime()->toDateTimeString();
             }
-            
-            if ($shift->clock_on_time) {
-                $shift->local_clock_on_time = $shift->getLocalClockOnTime()->toDateTimeString();
-            }
-            
-            if ($shift->clock_off_time) {
-                $shift->local_clock_off_time = $shift->getLocalClockOffTime()->toDateTimeString();
-            }
         }
 
+        // Transform shifts to include only required fields
+        $transformedCurrentShift = $this->transformShift($currentShift);
+        $transformedShiftHistory = $shiftHistory->map(function ($shift) {
+            return $this->transformShift($shift);
+        });
+
         return $this->successResponse([
-            'current_shift' => $currentShift,
-            'shift_history' => $shiftHistory,
+            'current_shift' => $transformedCurrentShift,
+            'shift_history' => $transformedShiftHistory,
             'date_summary' => $dateSummary
         ]);
     }
