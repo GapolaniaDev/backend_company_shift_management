@@ -13,8 +13,10 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="id", type="integer", format="int64", example=1, description="Unique identifier"),
  *     @OA\Property(property="shift_type_id", type="integer", example=2, description="Associated shift type ID"),
  *     @OA\Property(property="employee_id", type="integer", example=5, description="Assigned employee ID"),
- *     @OA\Property(property="date_start", type="string", format="date-time", example="2025-03-10T09:00:00Z", description="Shift start date and time"),
- *     @OA\Property(property="date_end", type="string", format="date-time", example="2025-03-10T17:00:00Z", description="Shift end date and time"),
+ *     @OA\Property(property="date_start", type="string", format="date-time", example="2025-03-10T09:00:00Z", description="Shift start date and time (UTC)"),
+ *     @OA\Property(property="date_end", type="string", format="date-time", example="2025-03-10T17:00:00Z", description="Shift end date and time (UTC)"),
+ *     @OA\Property(property="date_start_timezone", type="string", nullable=true, example="America/New_York", description="Timezone for shift start calculated from coordinates"),
+ *     @OA\Property(property="date_end_timezone", type="string", nullable=true, example="America/New_York", description="Timezone for shift end calculated from coordinates"),
  *     @OA\Property(property="total_hours", type="number", format="float", example=8.5, description="Total scheduled hours"),
  *     @OA\Property(property="weekday_code", type="integer", example=1, description="Day of week (0=Sunday, 6=Saturday)"),
  *     @OA\Property(property="comments", type="string", nullable=true, example="Cover for John", description="Additional shift notes"),
@@ -77,6 +79,8 @@ class Shift extends Model
         'employee_id',
         'date_start',
         'date_end',
+        'date_start_timezone',
+        'date_end_timezone',
         'total_hours',
         'weekday_code',
         'comments',
@@ -241,6 +245,36 @@ class Shift extends Model
         
         $timezone = $this->timezone_end ?: 'UTC';
         return $this->clock_off_time->copy()->setTimezone($timezone);
+    }
+    
+    /**
+     * Get the shift start time in the saved timezone
+     * 
+     * @return \Carbon\Carbon|null
+     */
+    public function getLocalStartTime()
+    {
+        if (!$this->date_start) {
+            return null;
+        }
+        
+        $timezone = $this->date_start_timezone ?: 'UTC';
+        return $this->date_start->copy()->setTimezone($timezone);
+    }
+    
+    /**
+     * Get the shift end time in the saved timezone
+     * 
+     * @return \Carbon\Carbon|null
+     */
+    public function getLocalEndTime()
+    {
+        if (!$this->date_end) {
+            return null;
+        }
+        
+        $timezone = $this->date_end_timezone ?: 'UTC';
+        return $this->date_end->copy()->setTimezone($timezone);
     }
 
 }
