@@ -57,6 +57,7 @@ Route::middleware(['auth:api'])->prefix('shifts')->group(function () {
     
     // Employee routes - restricted to their own shifts
     Route::get('/my-shifts', [ShiftController::class, 'myShifts']);
+    Route::get('/shift-history', [ShiftController::class, 'shiftHistory']);
     
     // Supervisor routes
     Route::middleware(['role:admin,supervisor'])->group(function () {

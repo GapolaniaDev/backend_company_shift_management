@@ -3176,23 +3176,6 @@
                                                         }
                                                     },
                                                     "type": "object"
-                                                },
-                                                "image_profile": {
-                                                    "properties": {
-                                                        "text_profile": {
-                                                            "type": "string",
-                                                            "example": "JP"
-                                                        },
-                                                        "text_color": {
-                                                            "type": "string",
-                                                            "example": "1D5A73"
-                                                        },
-                                                        "background_color": {
-                                                            "type": "string",
-                                                            "example": "E6F1F5"
-                                                        }
-                                                    },
-                                                    "type": "object"
                                                 }
                                             },
                                             "type": "object"
@@ -3261,7 +3244,8 @@
                                 "required": [
                                     "lat",
                                     "lng",
-                                    "type"
+                                    "type",
+                                    "timezone"
                                 ],
                                 "properties": {
                                     "lat": {
@@ -3282,6 +3266,11 @@
                                             "clock_off"
                                         ],
                                         "example": "clock_on"
+                                    },
+                                    "timezone": {
+                                        "description": "The timezone where the employee is located at clock time",
+                                        "type": "string",
+                                        "example": "America/New_York"
                                     }
                                 },
                                 "type": "object"
@@ -3315,6 +3304,24 @@
                                                     "format": "date-time"
                                                 },
                                                 "clock_off_time": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "nullable": true
+                                                },
+                                                "timezone_start": {
+                                                    "type": "string",
+                                                    "example": "America/New_York"
+                                                },
+                                                "timezone_end": {
+                                                    "type": "string",
+                                                    "example": "America/Los_Angeles",
+                                                    "nullable": true
+                                                },
+                                                "local_clock_on_time": {
+                                                    "type": "string",
+                                                    "format": "date-time"
+                                                },
+                                                "local_clock_off_time": {
                                                     "type": "string",
                                                     "format": "date-time",
                                                     "nullable": true
@@ -3606,16 +3613,28 @@
                         "example": 5
                     },
                     "date_start": {
-                        "description": "Shift start date and time",
+                        "description": "Shift start date and time (UTC)",
                         "type": "string",
                         "format": "date-time",
                         "example": "2025-03-10T09:00:00Z"
                     },
                     "date_end": {
-                        "description": "Shift end date and time",
+                        "description": "Shift end date and time (UTC)",
                         "type": "string",
                         "format": "date-time",
                         "example": "2025-03-10T17:00:00Z"
+                    },
+                    "date_start_timezone": {
+                        "description": "Timezone for shift start calculated from coordinates",
+                        "type": "string",
+                        "example": "America/New_York",
+                        "nullable": true
+                    },
+                    "date_end_timezone": {
+                        "description": "Timezone for shift end calculated from coordinates",
+                        "type": "string",
+                        "example": "America/New_York",
+                        "nullable": true
                     },
                     "total_hours": {
                         "description": "Total scheduled hours",
@@ -3711,6 +3730,28 @@
                         "format": "float",
                         "example": -122.419,
                         "nullable": true
+                    },
+                    "timezone_start": {
+                        "description": "Timezone where the clock-on occurred",
+                        "type": "string",
+                        "example": "America/New_York",
+                        "nullable": true
+                    },
+                    "timezone_end": {
+                        "description": "Timezone where the clock-off occurred",
+                        "type": "string",
+                        "example": "America/Los_Angeles",
+                        "nullable": true
+                    },
+                    "state": {
+                        "description": "Shift state: 0=not_started, 1=started, 2=finished",
+                        "type": "integer",
+                        "enum": [
+                            0,
+                            1,
+                            2
+                        ],
+                        "example": 0
                     },
                     "created_at": {
                         "description": "Timestamp when record was created",

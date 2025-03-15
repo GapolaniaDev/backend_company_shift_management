@@ -1040,4 +1040,201 @@ class ShiftController extends ApiController
         $index = $hashValue % count($this->backgroundColors);
         return $this->backgroundColors[$index];
     }
+    
+    /**
+     * @OA\Get(
+     *     path="/api/shifts/shift-history",
+     *     summary="Get shift history and date summary",
+     *     description="Retrieves the current shift for a specific date, history of completed shifts, and date summary with shift counts",
+     *     operationId="getShiftHistory",
+     *     tags={"Shifts"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="date",
+     *         in="query",
+     *         description="Date to retrieve shift for (YYYY-MM-DD)",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Shift history data",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(
+     *                 property="data",
+     *                 type="object",
+     *                 @OA\Property(
+     *                     property="current_shift",
+     *                     type="object",
+     *                     nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="date_start", type="string", format="date-time", example="2025-03-10T09:00:00Z"),
+     *                     @OA\Property(property="date_start_timezone", type="string", example="Australia/Adelaide"),
+     *                     @OA\Property(property="date_end", type="string", format="date-time", example="2025-03-10T17:00:00Z"),
+     *                     @OA\Property(property="date_end_timezone", type="string", example="Australia/Adelaide"),
+     *                     @OA\Property(property="location_lat", type="number", format="float", example=-34.9285),
+     *                     @OA\Property(property="location_lng", type="number", format="float", example=138.6007),
+     *                     @OA\Property(property="clock_on_time", type="string", format="date-time", nullable=true),
+     *                     @OA\Property(property="timezone_start", type="string", nullable=true, example="Australia/Adelaide"),
+     *                     @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
+     *                     @OA\Property(property="timezone_end", type="string", nullable=true, example="Australia/Adelaide"),
+     *                     @OA\Property(property="state", type="integer", example=0),
+     *                     @OA\Property(property="comments", type="string", nullable=true, example="Turno realizado sin problemas"),
+     *                     @OA\Property(property="total_hours", type="number", format="float", example=8)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="shift_history",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="date_start", type="string", format="date-time", example="2025-03-09T09:00:00Z"),
+     *                         @OA\Property(property="date_start_timezone", type="string", example="Australia/Adelaide"),
+     *                         @OA\Property(property="date_end", type="string", format="date-time", example="2025-03-09T17:00:00Z"),
+     *                         @OA\Property(property="date_end_timezone", type="string", example="Australia/Adelaide"),
+     *                         @OA\Property(property="location_lat", type="number", format="float", example=-34.9285),
+     *                         @OA\Property(property="location_lng", type="number", format="float", example=138.6007),
+     *                         @OA\Property(property="clock_on_time", type="string", format="date-time", nullable=true),
+     *                         @OA\Property(property="timezone_start", type="string", nullable=true, example="Australia/Adelaide"),
+     *                         @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
+     *                         @OA\Property(property="timezone_end", type="string", nullable=true, example="Australia/Adelaide"),
+     *                         @OA\Property(property="state", type="integer", example=2),
+     *                         @OA\Property(property="comments", type="string", nullable=true, example="Turno muy productivo"),
+     *                         @OA\Property(property="total_hours", type="number", format="float", example=8)
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="date_summary",
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="date", type="string", format="date", example="2025-03-03"),
+     *                         @OA\Property(property="total_shifts", type="integer", example=0)
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="User has no employee profile",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Your user account is not linked to an employee profile.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Unauthenticated"
+     *     )
+     * )
+     */
+    public function shiftHistory(Request $request)
+    {
+        $user = $request->user();
+        $employee = $user->employee;
+
+        if (!$employee) {
+            return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
+        }
+
+        // Get date parameter or use current date
+        $date = $request->has('date') 
+            ? Carbon::parse($request->input('date'))->startOfDay() 
+            : Carbon::now()->startOfDay();
+        
+        // Calculate date range (7 days before and 7 days after)
+        $startRange = (clone $date)->subDays(7);
+        $endRange = (clone $date)->addDays(7);
+        
+        // Current shift for the specified date
+        $currentShift = Shift::with(['shiftType'])
+            ->where('employee_id', $employee->id)
+            ->whereDate('date_start', '<=', $date)
+            ->whereDate('date_end', '>=', $date)
+            ->first();
+
+        // Initialize shift history
+        $shiftHistory = [];
+        
+        // Only get shift history if no specific date was filtered (first load)
+        if (!$request->has('date')) {
+            // Get the 10 most recent completed shifts
+            $shiftHistory = Shift::with(['shiftType'])
+                ->where('employee_id', $employee->id)
+                ->where('state', Shift::STATE_FINISHED)
+                ->whereNotNull('clock_off_time')
+                ->orderBy('date_end', 'desc')
+                ->limit(10)
+                ->get();
+        }
+        
+        // Generate date summary array
+        $dateSummary = [];
+        $currentDate = clone $startRange;
+        
+        // Count shifts for each day in the date range
+        while ($currentDate <= $endRange) {
+            $dateStr = $currentDate->format('Y-m-d');
+            
+            // Count shifts for this day
+            $shiftsCount = Shift::where('employee_id', $employee->id)
+                ->whereDate('date_start', '<=', $dateStr)
+                ->whereDate('date_end', '>=', $dateStr)
+                ->count();
+            
+            $dateSummary[] = [
+                'date' => $dateStr,
+                'total_shifts' => $shiftsCount
+            ];
+            
+            $currentDate->addDay();
+        }
+        
+        // Process data for the response
+        if ($currentShift) {
+            // Add local times
+            if ($currentShift->date_start) {
+                $currentShift->local_date_start = $currentShift->getLocalStartTime()->toDateTimeString();
+            }
+            
+            if ($currentShift->date_end) {
+                $currentShift->local_date_end = $currentShift->getLocalEndTime()->toDateTimeString();
+            }
+            
+            if ($currentShift->clock_on_time) {
+                $currentShift->local_clock_on_time = $currentShift->getLocalClockOnTime()->toDateTimeString();
+            }
+            
+            if ($currentShift->clock_off_time) {
+                $currentShift->local_clock_off_time = $currentShift->getLocalClockOffTime()->toDateTimeString();
+            }
+        }
+        
+        // Add local times to history shifts
+        foreach ($shiftHistory as $shift) {
+            if ($shift->date_start) {
+                $shift->local_date_start = $shift->getLocalStartTime()->toDateTimeString();
+            }
+            
+            if ($shift->date_end) {
+                $shift->local_date_end = $shift->getLocalEndTime()->toDateTimeString();
+            }
+            
+            if ($shift->clock_on_time) {
+                $shift->local_clock_on_time = $shift->getLocalClockOnTime()->toDateTimeString();
+            }
+            
+            if ($shift->clock_off_time) {
+                $shift->local_clock_off_time = $shift->getLocalClockOffTime()->toDateTimeString();
+            }
+        }
+
+        return $this->successResponse([
+            'current_shift' => $currentShift,
+            'shift_history' => $shiftHistory,
+            'date_summary' => $dateSummary
+        ]);
+    }
 }
