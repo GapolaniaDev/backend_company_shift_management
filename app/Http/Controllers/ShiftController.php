@@ -528,6 +528,15 @@ class ShiftController extends ApiController
             $shift->employee->first_name,
             $shift->employee->last_name
         );
+        
+        // Add local times in their respective timezones
+        if ($shift->clock_on_time) {
+            $shift->local_clock_on_time = $shift->getLocalClockOnTime()->toDateTimeString();
+        }
+        
+        if ($shift->clock_off_time) {
+            $shift->local_clock_off_time = $shift->getLocalClockOffTime()->toDateTimeString();
+        }
 
         return $this->successResponse($shift);
     }
@@ -719,10 +728,11 @@ class ShiftController extends ApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"lat", "lng", "type"},
+     *             required={"lat", "lng", "type", "timezone"},
      *             @OA\Property(property="lat", type="number", format="float", example=19.4326),
      *             @OA\Property(property="lng", type="number", format="float", example=-99.1332),
-     *             @OA\Property(property="type", type="string", enum={"clock_on", "clock_off"}, example="clock_on", description="Type of record: clock in or clock out")
+     *             @OA\Property(property="type", type="string", enum={"clock_on", "clock_off"}, example="clock_on", description="Type of record: clock in or clock out"),
+     *             @OA\Property(property="timezone", type="string", example="America/New_York", description="The timezone where the employee is located at clock time")
      *         )
      *     ),
      *     @OA\Response(
@@ -737,6 +747,10 @@ class ShiftController extends ApiController
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="clock_on_time", type="string", format="date-time"),
      *                 @OA\Property(property="clock_off_time", type="string", format="date-time", nullable=true),
+     *                 @OA\Property(property="timezone_start", type="string", example="America/New_York"),
+     *                 @OA\Property(property="timezone_end", type="string", example="America/Los_Angeles", nullable=true),
+     *                 @OA\Property(property="local_clock_on_time", type="string", format="date-time"),
+     *                 @OA\Property(property="local_clock_off_time", type="string", format="date-time", nullable=true),
      *                 @OA\Property(property="clock_on_lat", type="number", format="float", example=19.4326),
      *                 @OA\Property(property="clock_on_lng", type="number", format="float", example=-99.1332),
      *                 @OA\Property(property="clock_off_lat", type="number", format="float", nullable=true),
@@ -778,6 +792,7 @@ class ShiftController extends ApiController
             'lat' => 'required|numeric',
             'lng' => 'required|numeric',
             'type' => 'required|in:clock_on,clock_off',
+            'timezone' => 'required|string|max:64',
         ]);
 
         if ($validator->fails()) {
@@ -810,10 +825,12 @@ class ShiftController extends ApiController
                     return $this->errorResponse('Clock on cannot be updated after clock off', 422);
                 }
 
+                // Store the time in UTC but include the timezone information
                 $shift->update([
                     'clock_on_lat' => $request->lat,
                     'clock_on_lng' => $request->lng,
-                    'clock_on_time' => now(),
+                    'clock_on_time' => now()->setTimezone('UTC'),
+                    'timezone_start' => $request->timezone,
                     'state' => Shift::STATE_STARTED,
                 ]);
             } else {
@@ -821,15 +838,24 @@ class ShiftController extends ApiController
                     return $this->errorResponse('Clock off cannot happen before clock on', 422);
                 }
 
+                // Store the time in UTC but include the timezone information
                 $shift->update([
                     'clock_off_lat' => $request->lat,
                     'clock_off_lng' => $request->lng,
-                    'clock_off_time' => now(),
+                    'clock_off_time' => now()->setTimezone('UTC'),
+                    'timezone_end' => $request->timezone,
                     'state' => Shift::STATE_FINISHED,
                 ]);
             }
 
             DB::commit();
+            
+            // Add the local time in the response to show the correct time in the user's timezone
+            if ($request->type === 'clock_on' && $shift->clock_on_time) {
+                $shift->local_clock_on_time = $shift->getLocalClockOnTime()->toDateTimeString();
+            } else if ($request->type === 'clock_off' && $shift->clock_off_time) {
+                $shift->local_clock_off_time = $shift->getLocalClockOffTime()->toDateTimeString();
+            }
 
             return $this->successResponse($shift, $request->type === 'clock_on' ? 'Clock in successful' : 'Clock out successful');
         } catch (\Exception $e) {

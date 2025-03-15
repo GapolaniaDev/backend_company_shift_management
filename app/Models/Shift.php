@@ -30,6 +30,8 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="clock_on_lng", type="number", format="float", nullable=true, example=-122.419, description="Clock-in longitude"),
  *     @OA\Property(property="clock_off_lat", type="number", format="float", nullable=true, example=37.775, description="Clock-out latitude"),
  *     @OA\Property(property="clock_off_lng", type="number", format="float", nullable=true, example=-122.419, description="Clock-out longitude"),
+ *     @OA\Property(property="timezone_start", type="string", nullable=true, example="America/New_York", description="Timezone where the clock-on occurred"),
+ *     @OA\Property(property="timezone_end", type="string", nullable=true, example="America/Los_Angeles", description="Timezone where the clock-off occurred"),
  *     @OA\Property(property="state", type="integer", enum={0, 1, 2}, example=0, description="Shift state: 0=not_started, 1=started, 2=finished"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Timestamp when record was created"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Timestamp when record was last updated"),
@@ -85,6 +87,8 @@ class Shift extends Model
         'clock_off_lng',
         'clock_on_time',
         'clock_off_time',
+        'timezone_start',
+        'timezone_end',
         'radius',
         'zoom',
         'state',
@@ -93,6 +97,8 @@ class Shift extends Model
     protected $casts = [
         'date_start' => 'datetime',
         'date_end' => 'datetime',
+        'clock_on_time' => 'datetime',
+        'clock_off_time' => 'datetime',
         'total_hours' => 'decimal:2',
         'state' => 'integer',
     ];
@@ -205,6 +211,36 @@ class Shift extends Model
         $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
 
         return $earthRadius * $c;
+    }
+    
+    /**
+     * Get the clock-on time in the original timezone
+     * 
+     * @return \Carbon\Carbon|null
+     */
+    public function getLocalClockOnTime()
+    {
+        if (!$this->clock_on_time) {
+            return null;
+        }
+        
+        $timezone = $this->timezone_start ?: 'UTC';
+        return $this->clock_on_time->copy()->setTimezone($timezone);
+    }
+    
+    /**
+     * Get the clock-off time in the original timezone
+     * 
+     * @return \Carbon\Carbon|null
+     */
+    public function getLocalClockOffTime()
+    {
+        if (!$this->clock_off_time) {
+            return null;
+        }
+        
+        $timezone = $this->timezone_end ?: 'UTC';
+        return $this->clock_off_time->copy()->setTimezone($timezone);
     }
 
 }
