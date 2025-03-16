@@ -54,6 +54,7 @@ Route::middleware(['auth:api'])->prefix('shifts')->group(function () {
     // Routes available to all authenticated users
     Route::get('/today', [ShiftController::class, 'getTodayShift']);
     Route::put('/{id}/update-clock', [ShiftController::class, 'updateClock']);
+    Route::get('/by-range', [ShiftController::class, 'getShiftsByRange']);
     
     // Employee routes - restricted to their own shifts
     Route::get('/my-shifts', [ShiftController::class, 'myShifts']);

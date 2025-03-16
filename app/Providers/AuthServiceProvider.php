@@ -25,9 +25,9 @@ class AuthServiceProvider extends ServiceProvider
     {
         $this->registerPolicies();
 
-        // Ya no es necesario llamar a Passport::routes()
+        // It's no longer necessary to call Passport::routes()
 
-        // Configuración de tiempos de expiración para tokens (opcional)
+        // Token expiration time configuration (optional)
         Passport::tokensExpireIn(now()->addDays(15));
         Passport::refreshTokensExpireIn(now()->addDays(30));
         Passport::personalAccessTokensExpireIn(now()->addMonths(6));

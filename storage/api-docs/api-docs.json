@@ -2485,7 +2485,7 @@
                     "Shifts"
                 ],
                 "summary": "Create a shift",
-                "description": "Creates a new shift in the system.",
+                "description": "Creates a new shift in the system with validations for overlapping shifts and weekly hour limits.",
                 "operationId": "createShift",
                 "requestBody": {
                     "required": true,
@@ -2494,26 +2494,54 @@
                             "schema": {
                                 "properties": {
                                     "employee_id": {
+                                        "description": "Employee ID (verified for availability)",
                                         "type": "integer",
                                         "example": 5
                                     },
                                     "shift_type_id": {
+                                        "description": "Shift type ID",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "date_start": {
+                                        "description": "Start date/time (verified against overlapping shifts)",
                                         "type": "string",
                                         "format": "date-time",
                                         "example": "2023-10-12T09:00:00Z"
                                     },
                                     "date_end": {
+                                        "description": "End date/time (must be after start time)",
                                         "type": "string",
                                         "format": "date-time",
                                         "example": "2023-10-12T17:00:00Z"
                                     },
+                                    "total_hours": {
+                                        "description": "Total shift hours (used for weekly limit validation)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 8
+                                    },
                                     "location": {
+                                        "description": "Work location",
                                         "type": "string",
                                         "example": "Central Office"
+                                    },
+                                    "comments": {
+                                        "description": "Additional notes about the shift",
+                                        "type": "string",
+                                        "example": "Covering for John"
+                                    },
+                                    "latitude": {
+                                        "description": "Location latitude (used for timezone calculation)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 19.4326
+                                    },
+                                    "longitude": {
+                                        "description": "Location longitude (used for timezone calculation)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": -99.1332
                                     }
                                 },
                                 "type": "object"
@@ -2556,9 +2584,22 @@
                                                     "format": "date-time",
                                                     "example": "2023-10-12T17:00:00Z"
                                                 },
+                                                "total_hours": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 8
+                                                },
                                                 "location": {
                                                     "type": "string",
                                                     "example": "Central Office"
+                                                },
+                                                "comments": {
+                                                    "type": "string",
+                                                    "example": "Covering for John"
+                                                },
+                                                "weekday_code": {
+                                                    "type": "integer",
+                                                    "example": 4
                                                 }
                                             },
                                             "type": "object"
@@ -2581,10 +2622,31 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "Validation error"
+                                            "example": "The shift overlaps with other shifts assigned to the employee"
                                         },
                                         "errors": {
-                                            "type": "object"
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized access",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You are not authorized to create shifts"
                                         }
                                     },
                                     "type": "object"
@@ -2995,7 +3057,7 @@
                     "Shifts"
                 ],
                 "summary": "Update a shift",
-                "description": "Updates the details of an existing shift.",
+                "description": "Updates the details of an existing shift with validations for overlapping shifts and weekly hour limits.",
                 "operationId": "updateShift",
                 "parameters": [
                     {
@@ -3015,22 +3077,42 @@
                             "schema": {
                                 "properties": {
                                     "employee_id": {
+                                        "description": "Employee ID (verified for availability)",
                                         "type": "integer",
                                         "example": 5
                                     },
                                     "shift_type_id": {
+                                        "description": "Shift type ID",
                                         "type": "integer",
                                         "example": 1
                                     },
                                     "date_start": {
+                                        "description": "Start date/time (verified against overlapping shifts)",
                                         "type": "string",
                                         "format": "date-time",
                                         "example": "2023-10-12T09:00:00Z"
                                     },
                                     "date_end": {
+                                        "description": "End date/time (must be after start time)",
                                         "type": "string",
                                         "format": "date-time",
                                         "example": "2023-10-12T17:00:00Z"
+                                    },
+                                    "total_hours": {
+                                        "description": "Total shift hours (used for weekly limit validation)",
+                                        "type": "number",
+                                        "format": "float",
+                                        "example": 8
+                                    },
+                                    "location": {
+                                        "description": "Work location",
+                                        "type": "string",
+                                        "example": "Central Office"
+                                    },
+                                    "comments": {
+                                        "description": "Additional notes about the shift",
+                                        "type": "string",
+                                        "example": "Covering for John"
                                     }
                                 },
                                 "type": "object"
@@ -3050,7 +3132,104 @@
                                             "example": true
                                         },
                                         "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "employee_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "shift_type_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "date_start": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2023-10-12T09:00:00Z"
+                                                },
+                                                "date_end": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2023-10-12T17:00:00Z"
+                                                },
+                                                "total_hours": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 8
+                                                },
+                                                "location": {
+                                                    "type": "string",
+                                                    "example": "Central Office"
+                                                }
+                                            },
                                             "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Validation error",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "The shift exceeds the employee's weekly limit of 40 hours."
+                                        },
+                                        "errors": {
+                                            "type": "object",
+                                            "nullable": true
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Shift not found",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Shift not found"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Unauthorized access",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "You are not authorized to update this shift"
                                         }
                                     },
                                     "type": "object"
@@ -3411,6 +3590,214 @@
                 ]
             }
         },
+        "/api/shifts/by-range": {
+            "get": {
+                "tags": [
+                    "Shifts"
+                ],
+                "summary": "Get shifts by date range",
+                "description": "Allows getting shifts filtered by date range, employees and locations, grouped by day, week or month",
+                "operationId": "getShiftsByRange",
+                "parameters": [
+                    {
+                        "name": "start_date",
+                        "in": "query",
+                        "description": "Start date in YYYY-MM-DD format",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "end_date",
+                        "in": "query",
+                        "description": "End date in YYYY-MM-DD format",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "date"
+                        }
+                    },
+                    {
+                        "name": "view_type",
+                        "in": "query",
+                        "description": "View type to group results: daily, weekly, monthly",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "default": "daily",
+                            "enum": [
+                                "daily",
+                                "weekly",
+                                "monthly"
+                            ]
+                        }
+                    },
+                    {
+                        "name": "user_ids[]",
+                        "in": "query",
+                        "description": "Employee IDs to filter (can be repeated for multiple values)",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    },
+                    {
+                        "name": "location_ids[]",
+                        "in": "query",
+                        "description": "Location IDs to filter (can be repeated for multiple values)",
+                        "required": false,
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "type": "integer"
+                            }
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Successfully obtained shifts grouped by view type",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "data": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "date_start": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2023-11-07T09:00:00Z"
+                                                        },
+                                                        "date_end": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2023-11-07T17:00:00Z"
+                                                        },
+                                                        "employee_id": {
+                                                            "type": "integer",
+                                                            "example": 5
+                                                        },
+                                                        "location": {
+                                                            "type": "string",
+                                                            "example": "Downtown Office"
+                                                        },
+                                                        "shift_type_id": {
+                                                            "type": "integer",
+                                                            "example": 2
+                                                        },
+                                                        "local_date_start": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2023-11-07T09:00:00"
+                                                        },
+                                                        "local_date_end": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "example": "2023-11-07T17:00:00"
+                                                        },
+                                                        "employee": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 5
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "John Doe"
+                                                                },
+                                                                "first_name": {
+                                                                    "type": "string",
+                                                                    "example": "John"
+                                                                },
+                                                                "last_name": {
+                                                                    "type": "string",
+                                                                    "example": "Doe"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "shift_type": {
+                                                            "properties": {
+                                                                "id": {
+                                                                    "type": "integer",
+                                                                    "example": 2
+                                                                },
+                                                                "name": {
+                                                                    "type": "string",
+                                                                    "example": "Day Shift"
+                                                                },
+                                                                "color": {
+                                                                    "type": "string",
+                                                                    "example": "#1D5A73"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Error de validación",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Error de validación"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "No autenticado"
+                    },
+                    "403": {
+                        "description": "No autorizado"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/shifts/shift-history": {
             "get": {
                 "tags": [
@@ -3736,6 +4123,12 @@
                         "description": "Bank account number",
                         "type": "string",
                         "example": "12345678"
+                    },
+                    "weekly_working_hours": {
+                        "description": "Maximum weekly working hours limit",
+                        "type": "number",
+                        "format": "float",
+                        "example": 40
                     },
                     "created_at": {
                         "description": "Timestamp when record was created",

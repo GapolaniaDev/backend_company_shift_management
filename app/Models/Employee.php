@@ -22,6 +22,7 @@ use Illuminate\Database\Eloquent\Model;
  *     @OA\Property(property="abn", type="string", example="12345678901", description="Australian Business Number"),
  *     @OA\Property(property="bsb", type="string", example="123456", description="Bank State Branch number"),
  *     @OA\Property(property="account", type="string", example="12345678", description="Bank account number"),
+ *     @OA\Property(property="weekly_working_hours", type="number", format="float", example=40, description="Maximum weekly working hours limit"),
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Timestamp when record was created"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Timestamp when record was last updated"),
  *     @OA\Property(
@@ -56,7 +57,17 @@ class Employee extends Model
         'tax_number',
         'abn',
         'bsb',
-        'account'
+        'account',
+        'weekly_working_hours'
+    ];
+    
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'weekly_working_hours' => 'float'
     ];
 
     /**

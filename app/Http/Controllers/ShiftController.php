@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use App\Models\Shift;
 use App\Models\Employee;
 use App\Models\ShiftType;
+use App\Services\ShiftService;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 
@@ -18,6 +19,13 @@ use Illuminate\Support\Facades\DB;
  */
 class ShiftController extends ApiController
 {
+    protected $shiftService;
+
+    public function __construct(ShiftService $shiftService)
+    {
+        $this->shiftService = $shiftService;
+    }
+
     private $colorPalettes = [
         'full' => ['1D5A73', '54B5BF', '1F8C45', '97BF41', 'F2E422'],
         'bright' => ['1F8C45', '97BF41', 'F2E422', 'F2F2F2', '0D0D0D'],
@@ -392,18 +400,22 @@ class ShiftController extends ApiController
      * @OA\Post(
      *     path="/api/shifts",
      *     summary="Create a shift",
-     *     description="Creates a new shift in the system.",
+     *     description="Creates a new shift in the system with validations for overlapping shifts and weekly hour limits.",
      *     operationId="createShift",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="employee_id", type="integer", example=5),
-     *             @OA\Property(property="shift_type_id", type="integer", example=1),
-     *             @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z"),
-     *             @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z"),
-     *             @OA\Property(property="location", type="string", example="Central Office")
+     *             @OA\Property(property="employee_id", type="integer", example=5, description="Employee ID (verified for availability)"),
+     *             @OA\Property(property="shift_type_id", type="integer", example=1, description="Shift type ID"),
+     *             @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z", description="Start date/time (verified against overlapping shifts)"),
+     *             @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z", description="End date/time (must be after start time)"),
+     *             @OA\Property(property="total_hours", type="number", format="float", example=8.0, description="Total shift hours (used for weekly limit validation)"),
+     *             @OA\Property(property="location", type="string", example="Central Office", description="Work location"),
+     *             @OA\Property(property="comments", type="string", example="Covering for John", description="Additional notes about the shift"),
+     *             @OA\Property(property="latitude", type="number", format="float", example=19.4326, description="Location latitude (used for timezone calculation)"),
+     *             @OA\Property(property="longitude", type="number", format="float", example=-99.1332, description="Location longitude (used for timezone calculation)")
      *         )
      *     ),
      *     @OA\Response(
@@ -417,7 +429,10 @@ class ShiftController extends ApiController
      *                 @OA\Property(property="shift_type_id", type="integer", example=1),
      *                 @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z"),
      *                 @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z"),
-     *                 @OA\Property(property="location", type="string", example="Central Office")
+     *                 @OA\Property(property="total_hours", type="number", format="float", example=8.0),
+     *                 @OA\Property(property="location", type="string", example="Central Office"),
+     *                 @OA\Property(property="comments", type="string", example="Covering for John"),
+     *                 @OA\Property(property="weekday_code", type="integer", example=4)
      *             )
      *         )
      *     ),
@@ -426,8 +441,16 @@ class ShiftController extends ApiController
      *         description="Validation error",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Validation error"),
-     *             @OA\Property(property="errors", type="object")
+     *             @OA\Property(property="message", type="string", example="The shift overlaps with other shifts assigned to the employee"),
+     *             @OA\Property(property="errors", type="object", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized access",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="You are not authorized to create shifts")
      *         )
      *     )
      * )
@@ -441,7 +464,7 @@ class ShiftController extends ApiController
             'date_end' => 'required|date|after:date_start',
             'total_hours' => 'required|numeric|min:0',
             'location' => 'nullable|string|max:255',
-            'notes' => 'nullable|string|max:1000',
+            'comments' => 'nullable|string|max:1000',
             'latitude' => 'required_with:longitude|numeric',
             'longitude' => 'required_with:latitude|numeric',
         ]);
@@ -453,7 +476,7 @@ class ShiftController extends ApiController
         try {
             $data = $request->all();
 
-            // Asegurar que las fechas estén en UTC
+            // Ensure dates are in UTC
             if (isset($data['date_start'])) {
                 $data['date_start'] = Carbon::parse($data['date_start'])->setTimezone('UTC');
             }
@@ -462,16 +485,21 @@ class ShiftController extends ApiController
                 $data['date_end'] = Carbon::parse($data['date_end'])->setTimezone('UTC');
             }
 
-            // Calcular timezone basado en coordenadas
+            // Calculate timezone based on coordinates
             if ($request->has('latitude') && $request->has('longitude')) {
                 $timezone = $this->getTimezoneFromCoordinates($request->latitude, $request->longitude);
                 $data['date_start_timezone'] = $timezone;
                 $data['date_end_timezone'] = $timezone;
             }
 
-            $shift = Shift::create($data);
+            // Validate creation through the service (includes overlap and hour limit validations)
+            [$success, $result] = $this->shiftService->createShift($data);
 
-            return $this->successResponse($shift, 'Shift created successfully', 201);
+            if (!$success) {
+                return $this->errorResponse($result, 422);
+            }
+
+            return $this->successResponse($result, 'Shift created successfully', 201);
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to create shift: ' . $e->getMessage(), 500);
         }
@@ -487,17 +515,17 @@ class ShiftController extends ApiController
     private function getTimezoneFromCoordinates($latitude, $longitude)
     {
         try {
-            // Primero intentamos obtener el timezone con este método que no requiere API externa
+            // First we try to get the timezone with this method that doesn't require an external API
             $timezone = $this->getTimezoneFromCoordinatesLocal($latitude, $longitude);
             if ($timezone) {
                 return $timezone;
             }
 
-            // Si el método local falla, intentamos con la API de TimeZoneDB
-            $apiKey = env('TIMEZONEDB_API_KEY', ''); // API key de TimeZoneDB
+            // If the local method fails, we try with the TimeZoneDB API
+            $apiKey = env('TIMEZONEDB_API_KEY', ''); // TimeZoneDB API key
 
             if (empty($apiKey)) {
-                // Si no hay API key, intentamos con otra API gratuita
+                // If there's no API key, we try with another free API
                 $url = "https://api.ipgeolocation.io/timezone?lat={$latitude}&long={$longitude}";
                 $response = file_get_contents($url);
                 $data = json_decode($response, true);
@@ -506,7 +534,7 @@ class ShiftController extends ApiController
                     return $data['timezone'];
                 }
 
-                // Si todo falla, devolvemos UTC
+                // If everything fails, we return UTC
                 return 'UTC';
             }
 
@@ -518,10 +546,10 @@ class ShiftController extends ApiController
                 return $data['zoneName'];
             }
 
-            // Si falla, devolvemos UTC
+            // If it fails, we return UTC
             return 'UTC';
         } catch (\Exception $e) {
-            // En caso de error, devolvemos UTC
+            // In case of error, we return UTC
             return 'UTC';
         }
     }
@@ -669,7 +697,7 @@ class ShiftController extends ApiController
      * @OA\Put(
      *     path="/api/shifts/{id}",
      *     summary="Update a shift",
-     *     description="Updates the details of an existing shift.",
+     *     description="Updates the details of an existing shift with validations for overlapping shifts and weekly hour limits.",
      *     operationId="updateShift",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
@@ -683,10 +711,13 @@ class ShiftController extends ApiController
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             @OA\Property(property="employee_id", type="integer", example=5),
-     *             @OA\Property(property="shift_type_id", type="integer", example=1),
-     *             @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z"),
-     *             @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z")
+     *             @OA\Property(property="employee_id", type="integer", example=5, description="Employee ID (verified for availability)"),
+     *             @OA\Property(property="shift_type_id", type="integer", example=1, description="Shift type ID"),
+     *             @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z", description="Start date/time (verified against overlapping shifts)"),
+     *             @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z", description="End date/time (must be after start time)"),
+     *             @OA\Property(property="total_hours", type="number", format="float", example=8.0, description="Total shift hours (used for weekly limit validation)"),
+     *             @OA\Property(property="location", type="string", example="Central Office", description="Work location"),
+     *             @OA\Property(property="comments", type="string", example="Covering for John", description="Additional notes about the shift")
      *         )
      *     ),
      *     @OA\Response(
@@ -694,7 +725,40 @@ class ShiftController extends ApiController
      *         description="Shift successfully updated",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
-     *             @OA\Property(property="data", type="object")
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="employee_id", type="integer", example=5),
+     *                 @OA\Property(property="shift_type_id", type="integer", example=1),
+     *                 @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z"),
+     *                 @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z"),
+     *                 @OA\Property(property="total_hours", type="number", format="float", example=8.0),
+     *                 @OA\Property(property="location", type="string", example="Central Office")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Validation error",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="The shift exceeds the employee's weekly limit of 40 hours."),
+     *             @OA\Property(property="errors", type="object", nullable=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Shift not found",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Shift not found")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Unauthorized access",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="You are not authorized to update this shift")
      *         )
      *     )
      * )
@@ -710,7 +774,7 @@ class ShiftController extends ApiController
             'date_end' => 'sometimes|required|date|after:date_start',
             'total_hours' => 'sometimes|required|numeric|min:0',
             'location' => 'nullable|string|max:255',
-            'notes' => 'nullable|string|max:1000',
+            'comments' => 'nullable|string|max:1000',
             'latitude' => 'sometimes|required_with:longitude|numeric',
             'longitude' => 'sometimes|required_with:latitude|numeric',
         ]);
@@ -722,7 +786,7 @@ class ShiftController extends ApiController
         try {
             $data = $request->all();
 
-            // Asegurar que las fechas estén en UTC
+            // Ensure dates are in UTC
             if (isset($data['date_start'])) {
                 $data['date_start'] = Carbon::parse($data['date_start'])->setTimezone('UTC');
             }
@@ -731,16 +795,21 @@ class ShiftController extends ApiController
                 $data['date_end'] = Carbon::parse($data['date_end'])->setTimezone('UTC');
             }
 
-            // Calcular timezone basado en coordenadas si se proporcionaron nuevas
+            // Calculate timezone based on coordinates if new ones were provided
             if ($request->has('latitude') && $request->has('longitude')) {
                 $timezone = $this->getTimezoneFromCoordinates($request->latitude, $request->longitude);
                 $data['date_start_timezone'] = $timezone;
                 $data['date_end_timezone'] = $timezone;
             }
 
-            $shift->update($data);
+            // Validate update through the service (includes overlap and hour limit validations)
+            [$success, $result] = $this->shiftService->updateShift($id, $data);
 
-            return $this->successResponse($shift, 'Shift updated successfully');
+            if (!$success) {
+                return $this->errorResponse($result, 422);
+            }
+
+            return $this->successResponse($result, 'Shift updated successfully');
         } catch (\Exception $e) {
             return $this->errorResponse('Failed to update shift: ' . $e->getMessage(), 500);
         }
@@ -1076,6 +1145,180 @@ class ShiftController extends ApiController
             'local_date_end' => $shift->local_date_end ?? null,
             'state' => $shift->state,
         ];
+    }
+    
+    /**
+     * @OA\Get(
+     *     path="/api/shifts/by-range",
+     *     summary="Get shifts by date range",
+     *     description="Allows getting shifts filtered by date range, employees and locations, grouped by day, week or month",
+     *     operationId="getShiftsByRange",
+     *     tags={"Shifts"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="start_date",
+     *         in="query",
+     *         description="Start date in YYYY-MM-DD format",
+     *         required=true,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="end_date",
+     *         in="query",
+     *         description="End date in YYYY-MM-DD format",
+     *         required=true,
+     *         @OA\Schema(type="string", format="date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="view_type",
+     *         in="query",
+     *         description="View type to group results: daily, weekly, monthly",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"daily", "weekly", "monthly"}, default="daily")
+     *     ),
+     *     @OA\Parameter(
+     *         name="user_ids[]",
+     *         in="query",
+     *         description="Employee IDs to filter (can be repeated for multiple values)",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Parameter(
+     *         name="location_ids[]",
+     *         in="query",
+     *         description="Location IDs to filter (can be repeated for multiple values)",
+     *         required=false,
+     *         @OA\Schema(type="array", @OA\Items(type="integer"))
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Successfully obtained shifts grouped by view type",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=true),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\AdditionalProperties(
+     *                     type="array",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="date_start", type="string", format="date-time", example="2023-11-07T09:00:00Z"),
+     *                         @OA\Property(property="date_end", type="string", format="date-time", example="2023-11-07T17:00:00Z"),
+     *                         @OA\Property(property="employee_id", type="integer", example=5),
+     *                         @OA\Property(property="location", type="string", example="Downtown Office"),
+     *                         @OA\Property(property="shift_type_id", type="integer", example=2),
+     *                         @OA\Property(property="local_date_start", type="string", format="date-time", example="2023-11-07T09:00:00"),
+     *                         @OA\Property(property="local_date_end", type="string", format="date-time", example="2023-11-07T17:00:00"),
+     *                         @OA\Property(
+     *                             property="employee",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=5),
+     *                             @OA\Property(property="name", type="string", example="John Doe"),
+     *                             @OA\Property(property="first_name", type="string", example="John"),
+     *                             @OA\Property(property="last_name", type="string", example="Doe")
+     *                         ),
+     *                         @OA\Property(
+     *                             property="shift_type",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=2),
+     *                             @OA\Property(property="name", type="string", example="Day Shift"),
+     *                             @OA\Property(property="color", type="string", example="#1D5A73")
+     *                         )
+     *                     )
+     *                 )
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Error de validación",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Error de validación"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="No autenticado"
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="No autorizado"
+     *     )
+     * )
+     */
+    public function getShiftsByRange(Request $request)
+    {
+        // Validate input parameters
+        $validator = Validator::make($request->all(), [
+            'start_date' => 'required|date',
+            'end_date' => 'required|date|after_or_equal:start_date',
+            'view_type' => 'nullable|in:daily,weekly,monthly',
+            'user_ids' => 'nullable|array',
+            'user_ids.*' => 'integer|exists:employees,id',
+            'location_ids' => 'nullable|array',
+            'location_ids.*' => 'string',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->errorResponse('Validation error', 422, $validator->errors()->toArray());
+        }
+
+        // Get request parameters
+        $startDate = $request->input('start_date');
+        $endDate = $request->input('end_date');
+        $viewType = $request->input('view_type', 'daily'); // Default 'daily'
+        $userIds = $request->input('user_ids', []);
+        $locationIds = $request->input('location_ids', []);
+
+        try {
+            // Perform role-based permission verification
+            $user = $request->user();
+            
+            // If it's an employee, they can only see their own shifts
+            if ($user->isEmployee()) {
+                $employee = $user->employee;
+                if (!$employee) {
+                    return $this->errorResponse('Your account is not linked to an employee profile.', 404);
+                }
+                // Override userIds so they only see their own shifts
+                $userIds = [$employee->id];
+            } 
+            // If it's a supervisor, they can only see their team's shifts
+            else if ($user->isSupervisor()) {
+                $employee = $user->employee;
+                if (!$employee) {
+                    return $this->errorResponse('Your supervisor account is not linked to an employee profile.', 400);
+                }
+                
+                // If userIds were specified, verify that they are from the supervisor's team
+                if (!empty($userIds)) {
+                    $superviseeIds = Employee::where('supervisor_id', $employee->id)->pluck('id')->toArray();
+                    
+                    // Filter to only include those who are on the team
+                    $validUserIds = array_intersect($userIds, $superviseeIds);
+                    
+                    // If there are specified userIds but none are valid, return error
+                    if (empty($validUserIds) && !empty($userIds)) {
+                        return $this->errorResponse('You do not have permission to view these employees\' shifts.', 403);
+                    }
+                    
+                    $userIds = $validUserIds;
+                } else {
+                    // If none were specified, get all from the team
+                    $superviseeIds = Employee::where('supervisor_id', $employee->id)->pluck('id')->toArray();
+                    $userIds = $superviseeIds;
+                }
+            }
+            // Administrators can see all shifts (no additional restriction)
+            
+            // Get shifts from the service
+            $shifts = $this->shiftService->getShiftsByRange($startDate, $endDate, $viewType, $userIds, $locationIds);
+            
+            return $this->successResponse($shifts);
+        } catch (\Exception $e) {
+            return $this->errorResponse('Error getting shifts: ' . $e->getMessage(), 500);
+        }
     }
 
     /**
