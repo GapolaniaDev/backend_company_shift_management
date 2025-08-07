@@ -1112,7 +1112,7 @@ class ShiftController extends ApiController
 
     /**
      * Transform a shift object to include only required fields
-     * 
+     *
      * @param \App\Models\Shift $shift
      * @return array
      */
@@ -1130,7 +1130,10 @@ class ShiftController extends ApiController
         if ($shift->date_end && !isset($shift->local_date_end)) {
             $shift->local_date_end = $shift->getLocalEndTime()->toDateTimeString();
         }
-        
+
+        $start = Carbon::parse($shift->clock_on_time);
+        $end = Carbon::parse($shift->clock_off_time);
+        $total_minutes = $start->diffInMinutes($end);
         // Return only the required fields
         return [
             'id' => $shift->id,
@@ -1138,6 +1141,14 @@ class ShiftController extends ApiController
             'date_start_timezone' => $shift->date_start_timezone,
             'date_end' => $shift->date_end,
             'date_end_timezone' => $shift->date_end_timezone,
+
+            'clock_on_time' => $shift->clock_on_time,
+            'local_clock_on_time' => $shift->timezone_start,
+            'clock_off_time' => $shift->clock_off_time,
+            'local_clock_off_time' => $shift->timezone_end,
+
+            'total_minutes' => $total_minutes,
+
             'total_hours' => $shift->total_hours,
             'weekday_code' => $shift->weekday_code,
             'comments' => $shift->comments,
@@ -1146,7 +1157,7 @@ class ShiftController extends ApiController
             'state' => $shift->state,
         ];
     }
-    
+
     /**
      * @OA\Get(
      *     path="/api/shifts/by-range",
@@ -1274,7 +1285,7 @@ class ShiftController extends ApiController
         try {
             // Perform role-based permission verification
             $user = $request->user();
-            
+
             // If it's an employee, they can only see their own shifts
             if ($user->isEmployee()) {
                 $employee = $user->employee;
@@ -1283,26 +1294,25 @@ class ShiftController extends ApiController
                 }
                 // Override userIds so they only see their own shifts
                 $userIds = [$employee->id];
-            } 
-            // If it's a supervisor, they can only see their team's shifts
+            } // If it's a supervisor, they can only see their team's shifts
             else if ($user->isSupervisor()) {
                 $employee = $user->employee;
                 if (!$employee) {
                     return $this->errorResponse('Your supervisor account is not linked to an employee profile.', 400);
                 }
-                
+
                 // If userIds were specified, verify that they are from the supervisor's team
                 if (!empty($userIds)) {
                     $superviseeIds = Employee::where('supervisor_id', $employee->id)->pluck('id')->toArray();
-                    
+
                     // Filter to only include those who are on the team
                     $validUserIds = array_intersect($userIds, $superviseeIds);
-                    
+
                     // If there are specified userIds but none are valid, return error
                     if (empty($validUserIds) && !empty($userIds)) {
                         return $this->errorResponse('You do not have permission to view these employees\' shifts.', 403);
                     }
-                    
+
                     $userIds = $validUserIds;
                 } else {
                     // If none were specified, get all from the team
@@ -1311,10 +1321,10 @@ class ShiftController extends ApiController
                 }
             }
             // Administrators can see all shifts (no additional restriction)
-            
+
             // Get shifts from the service
             $shifts = $this->shiftService->getShiftsByRange($startDate, $endDate, $viewType, $userIds, $locationIds);
-            
+
             return $this->successResponse($shifts);
         } catch (\Exception $e) {
             return $this->errorResponse('Error getting shifts: ' . $e->getMessage(), 500);
