@@ -13,6 +13,11 @@ class DatabaseSeeder extends Seeder
     public function run(): void
     {
         $this->call([
+            // First create companies (including default)
+            DefaultCompanySeeder::class,
+            CompaniesSeeder::class,
+            
+            // Then create tenant data
             UserSeeder::class,
             EmployeesTableSeeder::class,
             ShiftTypesTableSeeder::class,
