@@ -177,6 +177,19 @@ class Shift extends Model
             throw new \Exception('Zoom must be greater or equal to 0.');
         }
 
+        // Validate replacement_id belongs to same company
+        if (isset($attributes['replacement_id']) && $attributes['replacement_id']) {
+            $replacementEmployee = Employee::find($attributes['replacement_id']);
+            if (!$replacementEmployee) {
+                throw new \Exception('Replacement employee not found.');
+            }
+            
+            $currentCompanyId = $this->company_id ?? app('currentCompanyId');
+            if ($replacementEmployee->company_id !== $currentCompanyId) {
+                throw new \Exception('Replacement employee must belong to the same company.');
+            }
+        }
+
         return true;
     }
 

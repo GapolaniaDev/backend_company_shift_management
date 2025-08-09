@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\Employee;
 use App\Models\User;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Http\JsonResponse;
@@ -337,7 +338,12 @@ class EmployeeController extends ApiController
         $validator = Validator::make($request->all(), [
             'first_name' => 'required|string|max:50',
             'last_name' => 'required|string|max:50',
-            'email' => 'nullable|email|max:100',
+            'email' => [
+                'nullable',
+                'email',
+                'max:100',
+                Rule::unique('employees')->where(fn($q) => $q->where('company_id', app('currentCompanyId', 1)))
+            ],
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'tax_number' => 'nullable|string|max:15',
@@ -605,7 +611,12 @@ class EmployeeController extends ApiController
         $validator = Validator::make($request->all(), [
             'first_name' => 'sometimes|required|string|max:50',
             'last_name' => 'sometimes|required|string|max:50',
-            'email' => 'nullable|email|max:100',
+            'email' => [
+                'nullable',
+                'email',
+                'max:100',
+                Rule::unique('employees')->where(fn($q) => $q->where('company_id', app('currentCompanyId', 1)))->ignore($employee->id)
+            ],
             'phone_number' => 'nullable|string|max:20',
             'address' => 'nullable|string|max:255',
             'tax_number' => 'nullable|string|max:15',

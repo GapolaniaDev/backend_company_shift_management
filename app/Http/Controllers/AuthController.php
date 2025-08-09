@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
@@ -59,7 +60,13 @@ class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
+            'email' => [
+                'required',
+                'string', 
+                'email',
+                'max:255',
+                Rule::unique('users')->where(fn($q) => $q->where('company_id', app('currentCompanyId', 1)))
+            ],
             'password' => 'required|string|min:8|confirmed',
             'role' => 'sometimes|string|in:admin,supervisor,employee',
         ]);
@@ -152,6 +159,11 @@ class AuthController extends Controller
         }
 
         $credentials = $request->only('email', 'password');
+        
+        // Add company_id filter if current company is set
+        if (app()->bound('currentCompanyId') && app('currentCompanyId')) {
+            $credentials['company_id'] = app('currentCompanyId');
+        }
 
         if (!Auth::attempt($credentials)) {
             return response()->json([

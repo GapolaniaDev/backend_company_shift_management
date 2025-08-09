@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\ShiftType;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
 
 class ShiftTypeController extends ApiController
@@ -43,7 +44,12 @@ class ShiftTypeController extends ApiController
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:50|unique:shift_types',
+            'name' => [
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('shift_types')->where(fn($q) => $q->where('company_id', app('currentCompanyId', 1)))
+            ],
             'weekly_hours' => 'required|numeric|min:0|max:168',
             'schedule' => 'required|json',
         ]);
@@ -83,7 +89,13 @@ class ShiftTypeController extends ApiController
         $shiftType = ShiftType::findOrFail($id);
         
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:50|unique:shift_types,name,' . $id,
+            'name' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:50',
+                Rule::unique('shift_types')->where(fn($q) => $q->where('company_id', app('currentCompanyId', 1)))->ignore($id)
+            ],
             'weekly_hours' => 'sometimes|required|numeric|min:0|max:168',
             'schedule' => 'sometimes|required|json',
         ]);
