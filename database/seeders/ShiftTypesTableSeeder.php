@@ -14,6 +14,7 @@ class ShiftTypesTableSeeder extends Seeder
         $defaultCompany = Company::where('slug', 'default')->first();
         $dimeoCompany = Company::where('slug', 'dimeo')->first();
         $corporateCleanCompany = Company::where('slug', 'corporate-clean')->first();
+        $bioGreenCompany = Company::where('slug', 'bio-green-family')->first();
 
         $shiftTypes = [
             // Default Company Shift Types
@@ -82,6 +83,21 @@ class ShiftTypesTableSeeder extends Seeder
                     'Saturday' => ['start' => '08:00', 'end' => '16:00'],
                 ]),
                 'company_id' => $corporateCleanCompany->id,
+            ],
+            
+            // Bio Green Family Shift Types
+            [
+                'name' => 'Eco-Friendly Clean',
+                'description' => 'Environmentally conscious cleaning services for Bio Green Family',
+                'weekly_hours' => 40,
+                'schedule' => json_encode([
+                    'Monday' => ['start' => '07:00', 'end' => '15:00'],
+                    'Tuesday' => ['start' => '07:00', 'end' => '15:00'],
+                    'Wednesday' => ['start' => '07:00', 'end' => '15:00'],
+                    'Thursday' => ['start' => '07:00', 'end' => '15:00'],
+                    'Friday' => ['start' => '07:00', 'end' => '15:00'],
+                ]),
+                'company_id' => $bioGreenCompany->id,
             ],
         ];
 
