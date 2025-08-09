@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -20,7 +21,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class PayPeriod extends Model
 {
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -31,6 +32,7 @@ class PayPeriod extends Model
         'start_date',
         'end_date',
         'fiscal_week',
+        'company_id',
     ];
 
     /**

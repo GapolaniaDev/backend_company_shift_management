@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -39,7 +40,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Employee extends Model
 {
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -58,7 +59,8 @@ class Employee extends Model
         'abn',
         'bsb',
         'account',
-        'weekly_working_hours'
+        'weekly_working_hours',
+        'company_id'
     ];
     
     /**

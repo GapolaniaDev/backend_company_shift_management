@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -30,7 +31,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class ShiftConfiguration extends Model
 {
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /**
      * The attributes that are mass assignable.
@@ -41,6 +42,7 @@ class ShiftConfiguration extends Model
         'shift_type_id',
         'employee_id',
         'shift_duration',
+        'company_id',
     ];
 
     /**

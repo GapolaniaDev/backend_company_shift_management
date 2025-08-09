@@ -1147,6 +1147,7 @@ class ShiftController extends ApiController
             'clock_off_time' => $shift->clock_off_time,
             'local_clock_off_time' => $shift->timezone_end,
 
+
             'total_minutes' => $total_minutes,
 
             'total_hours' => $shift->total_hours,

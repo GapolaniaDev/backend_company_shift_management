@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -65,7 +66,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Shift extends Model
 {
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /**
      * State constants for shifts
@@ -96,6 +97,7 @@ class Shift extends Model
         'radius',
         'zoom',
         'state',
+        'company_id',
     ];
 
     protected $casts = [
