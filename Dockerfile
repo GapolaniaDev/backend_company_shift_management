@@ -28,5 +28,5 @@ RUN composer install --no-dev --optimize-autoloader
 # Configuración de permisos
 RUN chown -R www-data:www-data /var/www/storage /var/www/bootstrap/cache
 
-ESPOSE 8000
+EXPOSE 8000
 CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
