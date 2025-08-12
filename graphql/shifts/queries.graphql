@@ -13,5 +13,4 @@ extend type Query {
     @guard(with: ["api"])
     @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Shift")
     @whereAuthCompany
-    @scope(name: "filterShifts", args: ["filter"])
 }

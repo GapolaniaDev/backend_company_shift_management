@@ -50,8 +50,6 @@
 #import templateExceptions/queries.graphql
 #import templateExceptions/mutations.graphql
 
-directive @whereAuthCompany on FIELD_DEFINITION
-
 type Query
 
 type Mutation
