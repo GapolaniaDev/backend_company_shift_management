@@ -42,7 +42,7 @@ class AddLocationToShiftsTable extends Migration
                 'clock_on_lat',
                 'clock_on_lng',
                 'clock_off_lat',
-                'clock_off_lng'
+                'clock_off_lng',
             ]);
         });
     }

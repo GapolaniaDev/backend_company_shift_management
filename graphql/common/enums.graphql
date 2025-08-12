@@ -1,0 +1,105 @@
+# User roles enum - mapped from users table
+enum UserRole {
+  ADMIN @enum(value: "admin")
+  SUPERVISOR @enum(value: "supervisor")
+  EMPLOYEE @enum(value: "employee")
+  # Additional values may be added in the future
+}
+
+# Shift status enum - mapped from shifts table
+enum ShiftStatus {
+  DRAFT @enum(value: "draft")
+  PUBLISHED @enum(value: "published")
+  CANCELLED @enum(value: "cancelled")
+  # Additional values may be added in the future
+}
+
+# Assignment status enum - mapped from shift_assignments table
+enum AssignmentStatus {
+  ASSIGNED @enum(value: "assigned")
+  ACCEPTED @enum(value: "accepted")
+  DECLINED @enum(value: "declined")
+  COMPLETED @enum(value: "completed")
+  NO_SHOW @enum(value: "no_show")
+  # Additional values may be added in the future
+}
+
+# Assignment type enum - mapped from shift_assignments table
+enum AssignmentType {
+  PRIMARY @enum(value: "primary")
+  BACKUP @enum(value: "backup")
+  REPLACEMENT @enum(value: "replacement")
+  # Additional values may be added in the future
+}
+
+# Replacement request type enum - mapped from replacement_requests table
+enum ReplacementRequestType {
+  FIND_REPLACEMENT @enum(value: "find_replacement")
+  CALL_OUT @enum(value: "call_out")
+  SWAP_REQUEST @enum(value: "swap_request")
+  # Additional values may be added in the future
+}
+
+# Replacement request status enum - mapped from replacement_requests table
+enum ReplacementRequestStatus {
+  PENDING @enum(value: "pending")
+  APPROVED @enum(value: "approved")
+  REJECTED @enum(value: "rejected")
+  FULFILLED @enum(value: "fulfilled")
+  CANCELLED @enum(value: "cancelled")
+  # Additional values may be added in the future
+}
+
+# Urgency levels enum - mapped from replacement_requests table
+enum Urgency {
+  LOW @enum(value: "low")
+  MEDIUM @enum(value: "medium")
+  HIGH @enum(value: "high")
+  EMERGENCY @enum(value: "emergency")
+  # Additional values may be added in the future
+}
+
+# Swap type enum - mapped from shift_swaps table
+enum SwapType {
+  DIRECT @enum(value: "direct")
+  THREE_WAY @enum(value: "three_way")
+  MULTIPLE @enum(value: "multiple")
+  # Additional values may be added in the future
+}
+
+# Swap status enum - mapped from shift_swaps table
+enum SwapStatus {
+  PROPOSED @enum(value: "proposed")
+  PENDING_APPROVAL @enum(value: "pending_approval")
+  APPROVED @enum(value: "approved")
+  REJECTED @enum(value: "rejected")
+  COMPLETED @enum(value: "completed")
+  CANCELLED @enum(value: "cancelled")
+  # Additional values may be added in the future
+}
+
+# Bid status enum - mapped from replacement_bids table
+enum BidStatus {
+  PENDING @enum(value: "pending")
+  ACCEPTED @enum(value: "accepted")
+  REJECTED @enum(value: "rejected")
+  WITHDRAWN @enum(value: "withdrawn")
+  # Additional values may be added in the future
+}
+
+# Schedule run status enum - mapped from schedule_runs table
+enum ScheduleRunStatus {
+  DRAFT @enum(value: "draft")
+  REVIEW @enum(value: "review")
+  PUBLISHED @enum(value: "published")
+  ARCHIVED @enum(value: "archived")
+  # Additional values may be added in the future
+}
+
+# Exception type enum - mapped from template_exceptions table
+enum ExceptionType {
+  CANCEL @enum(value: "cancel")
+  MODIFY @enum(value: "modify")
+  ADD @enum(value: "add")
+  # Additional values may be added in the future
+}

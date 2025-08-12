@@ -1,0 +1,16 @@
+extend type Mutation {
+  createShiftType(input: ShiftTypeUpsertInput! @spread): ShiftType
+    @guard(with: ["api"])
+    @can(ability: "create", model: "App\\Models\\ShiftType")
+    @create
+
+  updateShiftType(id: ID!, input: ShiftTypeUpsertInput! @spread): ShiftType
+    @guard(with: ["api"])
+    @can(ability: "update", find: "id")
+    @update
+
+  deleteShiftType(id: ID!): Boolean
+    @guard(with: ["api"])
+    @can(ability: "delete", find: "id")
+    @delete(model: "App\\Models\\ShiftType")
+}

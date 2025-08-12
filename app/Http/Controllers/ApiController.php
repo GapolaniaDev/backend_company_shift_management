@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 class ApiController extends Controller
@@ -12,12 +12,12 @@ class ApiController extends Controller
      * Default page size for pagination
      */
     protected int $defaultPageSize = 15;
-    
+
     /**
      * Maximum page size for pagination
      */
     protected int $maxPageSize = 100;
-    
+
     /**
      * Success response
      */
@@ -26,18 +26,18 @@ class ApiController extends Controller
         $response = [
             'success' => true,
         ];
-        
+
         if ($message) {
             $response['message'] = $message;
         }
-        
+
         if ($data) {
             $response['data'] = $data;
         }
-        
+
         return response()->json($response, $code);
     }
-    
+
     /**
      * Error response
      */
@@ -47,14 +47,14 @@ class ApiController extends Controller
             'success' => false,
             'message' => $message,
         ];
-        
+
         if ($errors) {
             $response['errors'] = $errors;
         }
-        
+
         return response()->json($response, $code);
     }
-    
+
     /**
      * Handle pagination parameters
      */
@@ -62,13 +62,13 @@ class ApiController extends Controller
     {
         $page = $request->input('page', 1);
         $pageSize = min(
-            $request->input('per_page', $this->defaultPageSize), 
+            $request->input('per_page', $this->defaultPageSize),
             $this->maxPageSize
         );
-        
+
         return [$page, $pageSize];
     }
-    
+
     /**
      * Format paginated response
      */
@@ -91,11 +91,11 @@ class ApiController extends Controller
                 ],
             ],
         ];
-        
+
         if ($message) {
             $response['message'] = $message;
         }
-        
+
         return response()->json($response);
     }
 }

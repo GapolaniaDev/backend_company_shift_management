@@ -1,15 +1,14 @@
 <?php
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\DashboardController;
-use App\Http\Controllers\ShiftGenerationController;
-use App\Http\Controllers\ShiftController;
 use App\Http\Controllers\EmployeeController;
-use App\Http\Controllers\ShiftTypeController;
-use App\Http\Controllers\ShiftConfigurationController;
 use App\Http\Controllers\PayPeriodController;
+use App\Http\Controllers\ShiftConfigurationController;
+use App\Http\Controllers\ShiftController;
+use App\Http\Controllers\ShiftGenerationController;
+use App\Http\Controllers\ShiftTypeController;
+use Illuminate\Support\Facades\Route;
 
 /*
 |--------------------------------------------------------------------------
@@ -32,13 +31,13 @@ Route::middleware('auth:api')->group(function () {
 Route::middleware(['auth:api'])->prefix('employees')->group(function () {
     // Employee can only access their own data
     Route::get('/me', [EmployeeController::class, 'me']);
-    
+
     // Supervisor can access their employees
     Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/', [EmployeeController::class, 'index']);
         Route::get('/supervisees', [EmployeeController::class, 'supervisees']);
     });
-    
+
     // Admin can do everything
     Route::middleware(['role:admin'])->group(function () {
         Route::post('/', [EmployeeController::class, 'store']);
@@ -54,16 +53,16 @@ Route::middleware(['auth:api'])->prefix('shifts')->group(function () {
     // Routes available to all authenticated users
     Route::get('/today', [ShiftController::class, 'getTodayShift']);
     Route::put('/{id}/update-clock', [ShiftController::class, 'updateClock']);
-    
+
     // Employee routes - restricted to their own shifts
     Route::get('/my-shifts', [ShiftController::class, 'myShifts']);
-    
+
     // Supervisor routes
     Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/', [ShiftController::class, 'index']);
         Route::get('/team', [ShiftController::class, 'teamShifts']);
     });
-    
+
     // Admin routes
     Route::middleware(['role:admin'])->group(function () {
         Route::post('/', [ShiftController::class, 'store']);
@@ -92,12 +91,12 @@ Route::middleware(['auth:api'])->prefix('shift-configurations')->group(function 
         Route::put('/{id}', [ShiftConfigurationController::class, 'update']);
         Route::delete('/{id}', [ShiftConfigurationController::class, 'destroy']);
     });
-    
+
     // Supervisors can view and modify their team's configurations
     Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/team', [ShiftConfigurationController::class, 'teamConfigurations']);
     });
-    
+
     // Employees can only see their own
     Route::get('/my-configurations', [ShiftConfigurationController::class, 'myConfigurations']);
 });
@@ -114,11 +113,11 @@ Route::middleware(['auth:api', 'role:admin'])->prefix('pay-periods')->group(func
 // Dashboard routes with role-based restrictions
 Route::middleware(['auth:api'])->group(function () {
     Route::get('/dashboard/employee', [DashboardController::class, 'employeeDashboard']);
-    
+
     Route::middleware(['role:admin,supervisor'])->group(function () {
         Route::get('/dashboard/supervisor', [DashboardController::class, 'supervisorDashboard']);
     });
-    
+
     Route::middleware(['role:admin'])->group(function () {
         Route::get('/dashboard/admin', [DashboardController::class, 'adminDashboard']);
     });

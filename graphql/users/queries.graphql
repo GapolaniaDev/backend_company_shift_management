@@ -1,0 +1,10 @@
+extend type Query {
+  user(id: ID! @eq): User
+    @guard(with: ["api"])
+    @can(ability: "view", find: "id")
+    @find
+
+  me: User
+    @guard(with: ["api"])
+    @auth
+}

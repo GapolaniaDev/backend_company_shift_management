@@ -1,9 +1,8 @@
 <?php
 
 use Illuminate\Database\Migrations\Migration;
-use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -14,13 +13,13 @@ return new class extends Migration
     {
         // 1. Migrate location data from shifts to locations table
         $this->migrateLocationsFromShifts();
-        
+
         // 2. Create shift assignments for existing shifts
         $this->createShiftAssignments();
-        
+
         // 3. Handle existing replacements
         $this->handleExistingReplacements();
-        
+
         // 4. Create default schedule run for existing shifts
         $this->createDefaultScheduleRun();
     }
@@ -35,7 +34,7 @@ return new class extends Migration
         DB::table('schedule_runs')->truncate();
         DB::table('locations')->truncate();
     }
-    
+
     private function migrateLocationsFromShifts(): void
     {
         // Get unique locations from existing shifts (only lat/lng available)
@@ -45,9 +44,9 @@ return new class extends Migration
             ->whereNotNull('location_lng')
             ->groupBy('location_lat', 'location_lng', 'radius', 'zoom')
             ->get();
-            
+
         $locationMapping = [];
-        
+
         foreach ($uniqueLocations as $location) {
             // Get company_id from the first shift with this location
             // Check if shifts.company_id exists, otherwise get from employee relation
@@ -58,8 +57,8 @@ return new class extends Migration
                     ->where('shifts.location_lng', $location->location_lng)
                     ->value('company_id');
             }
-            
-            if (!$companyId) {
+
+            if (! $companyId) {
                 $companyId = DB::table('shifts')
                     ->whereNotNull('employee_id')
                     ->join('employees', 'shifts.employee_id', '=', 'employees.id')
@@ -68,11 +67,11 @@ return new class extends Migration
                     ->where('shifts.location_lng', $location->location_lng)
                     ->value('users.id');
             }
-                
+
             if ($companyId) {
                 $locationId = DB::table('locations')->insertGetId([
                     'company_id' => $companyId,
-                    'name' => 'Location ' . $location->location_lat . ',' . $location->location_lng,
+                    'name' => 'Location '.$location->location_lat.','.$location->location_lng,
                     'latitude' => $location->location_lat,
                     'longitude' => $location->location_lng,
                     'radius' => $location->radius ?: 100,
@@ -81,29 +80,29 @@ return new class extends Migration
                     'created_at' => now(),
                     'updated_at' => now(),
                 ]);
-                
+
                 $locationMapping["{$location->location_lat}_{$location->location_lng}"] = $locationId;
             }
         }
-        
+
         // Update shifts with location_id
         foreach ($locationMapping as $key => $locationId) {
             $parts = explode('_', $key);
             $lat = $parts[0] ?? null;
             $lng = $parts[1] ?? null;
-            
+
             DB::table('shifts')
                 ->where('location_lat', $lat)
                 ->where('location_lng', $lng)
                 ->update(['location_id' => $locationId]);
         }
     }
-    
+
     private function createShiftAssignments(): void
     {
         // Create shift_assignments for all existing shifts with employee_id (if not already exists)
         $shifts = DB::table('shifts')->whereNotNull('employee_id')->get();
-        
+
         foreach ($shifts as $shift) {
             // Check if assignment already exists
             $existingAssignment = DB::table('shift_assignments')
@@ -111,8 +110,8 @@ return new class extends Migration
                 ->where('employee_id', $shift->employee_id)
                 ->where('assignment_type', 'primary')
                 ->first();
-                
-            if (!$existingAssignment) {
+
+            if (! $existingAssignment) {
                 DB::table('shift_assignments')->insert([
                     'shift_id' => $shift->id,
                     'employee_id' => $shift->employee_id,
@@ -127,19 +126,19 @@ return new class extends Migration
             }
         }
     }
-    
+
     private function handleExistingReplacements(): void
     {
         // Handle existing replacement_id relationships
         $shiftsWithReplacements = DB::table('shifts')->whereNotNull('replacement_id')->get();
-        
+
         foreach ($shiftsWithReplacements as $shift) {
             // Find the primary assignment for this shift
             $primaryAssignment = DB::table('shift_assignments')
                 ->where('shift_id', $shift->id)
                 ->where('assignment_type', 'primary')
                 ->first();
-                
+
             if ($primaryAssignment) {
                 // Create replacement assignment
                 $replacementAssignmentId = DB::table('shift_assignments')->insertGetId([
@@ -155,7 +154,7 @@ return new class extends Migration
                     'created_at' => $shift->created_at,
                     'updated_at' => $shift->updated_at,
                 ]);
-                
+
                 // Update the primary assignment to show it was replaced
                 DB::table('shift_assignments')
                     ->where('id', $primaryAssignment->id)
@@ -166,12 +165,12 @@ return new class extends Migration
             }
         }
     }
-    
+
     private function createDefaultScheduleRun(): void
     {
         // Group existing shifts by company and create schedule runs for each week
         $companyShifts = collect();
-        
+
         if (Schema::hasColumn('shifts', 'company_id')) {
             $companyShifts = DB::table('shifts')
                 ->select('company_id', 'shifts.*')
@@ -189,27 +188,27 @@ return new class extends Migration
                 ->get()
                 ->groupBy('company_id');
         }
-            
+
         foreach ($companyShifts as $companyId => $shifts) {
             // Group shifts by week
             $weekGroups = $shifts->groupBy(function ($shift) {
                 return date('Y-W', strtotime($shift->date_start));
             });
-            
+
             foreach ($weekGroups as $week => $weekShifts) {
                 $firstShift = $weekShifts->first();
                 $lastShift = $weekShifts->last();
-                
+
                 $periodStart = date('Y-m-d', strtotime('monday this week', strtotime($firstShift->date_start)));
                 $periodEnd = date('Y-m-d', strtotime('sunday this week', strtotime($lastShift->date_start)));
-                
+
                 // Check if schedule run already exists for this period
                 $existingRun = DB::table('schedule_runs')
                     ->where('company_id', $companyId)
                     ->where('period_start', $periodStart)
                     ->where('period_end', $periodEnd)
                     ->first();
-                    
+
                 if ($existingRun) {
                     $scheduleRunId = $existingRun->id;
                 } else {
@@ -232,7 +231,7 @@ return new class extends Migration
                         'updated_at' => now(),
                     ]);
                 }
-                
+
                 // Update all shifts in this week with the schedule_run_id
                 $shiftIds = $weekShifts->pluck('id')->toArray();
                 DB::table('shifts')

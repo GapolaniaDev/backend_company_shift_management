@@ -92,8 +92,8 @@ class ShiftTypesTableSeeder extends Seeder
         foreach ($shiftTypes as $type => $schedule) {
             $scheduleJson = json_encode(array_map(function ($times) {
                 return [
-                    'time_start' => date("H:i:s", strtotime($times['start'])),
-                    'time_finish' => date("H:i:s", strtotime($times['finish'])),
+                    'time_start' => date('H:i:s', strtotime($times['start'])),
+                    'time_finish' => date('H:i:s', strtotime($times['finish'])),
                 ];
             }, $schedule));
 

@@ -1,0 +1,43 @@
+type Employee {
+  id: ID!
+  user_id: Int!
+  supervisor_id: Int
+  first_name: String!
+  last_name: String!
+  email: String!
+  phone_number: String
+  address: String
+  tax_number: String
+  abn: String
+  bsb: String
+  account: String
+  weekly_working_hours: Float
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relations
+  user: User @belongsTo
+  supervisor: Employee @belongsTo
+  supervisees: [Employee!]! @hasMany
+  shifts: [Shift!]! @hasMany
+}
+
+type EmployeePaginator {
+  paginatorInfo: PaginatorInfo!
+  data: [Employee!]!
+}
+
+input EmployeeUpsertInput {
+  user_id: Int!
+  supervisor_id: Int
+  first_name: String!
+  last_name: String!
+  email: String!
+  phone_number: String
+  address: String
+  tax_number: String
+  abn: String
+  bsb: String
+  account: String
+  weekly_working_hours: Float
+}

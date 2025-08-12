@@ -24,7 +24,7 @@ return new class extends Migration
             $table->string('timezone')->default('UTC');
             $table->boolean('is_active')->default(true);
             $table->timestamps();
-            
+
             $table->index(['company_id', 'is_active']);
         });
     }

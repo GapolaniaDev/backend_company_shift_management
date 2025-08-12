@@ -1,0 +1,14 @@
+extend type Query {
+  companies: [Company!]!
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Company")
+
+  company(id: ID! @eq): Company
+    @guard(with: ["api"]) 
+    @find
+    
+  activeCompanies: [Company!]!
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Company")
+    @scope(name: "active")
+}

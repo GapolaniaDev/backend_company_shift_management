@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\Employee;
+use Illuminate\Http\Request;
 
 class DashboardController extends Controller
 {
@@ -24,7 +24,7 @@ class DashboardController extends Controller
                 'email' => $employee->email,
                 'phone' => $employee->phone,
                 'address' => $employee->address,
-                'position' => 'cleaner'
+                'position' => 'cleaner',
             ];
         });
 

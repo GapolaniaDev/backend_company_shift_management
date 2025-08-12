@@ -2,11 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\ShiftConfiguration;
 use App\Models\Employee;
+use App\Models\ShiftConfiguration;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 
 /**
  * @OA\Tag(
@@ -24,52 +23,67 @@ class ShiftConfigurationController extends ApiController
      *     operationId="listShiftConfigurations",
      *     tags={"ShiftConfigurations"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="employee_id",
      *         in="query",
      *         description="Filter by employee ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="shift_type_id",
      *         in="query",
      *         description="Filter by shift type ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"created_at", "updated_at"}, default="created_at")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_dir",
      *         in="query",
      *         description="Sort direction",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="The current page for pagination",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="pageSize",
      *         in="query",
      *         description="The number of items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", example=10)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="List of shift configurations",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array", @OA\Items(
      *                 @OA\Property(property="id", type="integer", example=1),
@@ -81,6 +95,7 @@ class ShiftConfigurationController extends ApiController
      *             @OA\Property(property="meta", type="object", description="Pagination metadata")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden"
@@ -124,24 +139,31 @@ class ShiftConfigurationController extends ApiController
      *     operationId="teamShiftConfigurations",
      *     tags={"ShiftConfigurations"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="employee_id",
      *         in="query",
      *         description="Filter by employee ID among supervised employees",
      *         required=false,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="shift_type_id",
      *         in="query",
      *         description="Filter by shift type ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="List of shift configurations for supervised employees",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array", @OA\Items(
      *                 @OA\Property(property="id", type="integer", example=1),
@@ -153,6 +175,7 @@ class ShiftConfigurationController extends ApiController
      *             @OA\Property(property="meta", type="object", description="Pagination metadata")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden"
@@ -168,7 +191,7 @@ class ShiftConfigurationController extends ApiController
         $user = $request->user();
         $employee = $user->employee;
 
-        if (!$employee) {
+        if (! $employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 400);
         }
 
@@ -210,17 +233,22 @@ class ShiftConfigurationController extends ApiController
      *     operationId="myShiftConfigurations",
      *     tags={"ShiftConfigurations"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="shift_type_id",
      *         in="query",
      *         description="Filter by shift type ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="List of shift configurations for the authenticated employee",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array", @OA\Items(
      *                 @OA\Property(property="id", type="integer", example=1),
@@ -232,6 +260,7 @@ class ShiftConfigurationController extends ApiController
      *             @OA\Property(property="meta", type="object", description="Pagination metadata")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden"
@@ -247,7 +276,7 @@ class ShiftConfigurationController extends ApiController
         $user = $request->user();
         $employee = $user->employee;
 
-        if (!$employee) {
+        if (! $employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
         }
 
@@ -273,17 +302,23 @@ class ShiftConfigurationController extends ApiController
      *     operationId="storeShiftConfiguration",
      *     tags={"Shift Configuration"},
      *     summary="Store a new shift configuration",
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(ref="#/components/schemas/ShiftConfiguration")
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Shift configuration created successfully",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="data", ref="#/components/schemas/ShiftConfiguration")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation errors"
@@ -308,25 +343,25 @@ class ShiftConfigurationController extends ApiController
         // Check for duplicate configurations
         $existingConfig = ShiftConfiguration::where('employee_id', $request->input('employee_id'))
             ->where('shift_type_id', $request->input('shift_type_id'))
-            ->where(function($query) use ($request) {
+            ->where(function ($query) use ($request) {
                 // Handle date range overlap
                 if ($request->has('end_date')) {
-                    $query->where(function($q) use ($request) {
+                    $query->where(function ($q) use ($request) {
                         $q->whereBetween('start_date', [$request->input('start_date'), $request->input('end_date')])
-                          ->orWhereBetween('end_date', [$request->input('start_date'), $request->input('end_date')])
-                          ->orWhere(function($inner) use ($request) {
-                              $inner->where('start_date', '<=', $request->input('start_date'))
-                                   ->where('end_date', '>=', $request->input('end_date'));
-                          });
+                            ->orWhereBetween('end_date', [$request->input('start_date'), $request->input('end_date')])
+                            ->orWhere(function ($inner) use ($request) {
+                                $inner->where('start_date', '<=', $request->input('start_date'))
+                                    ->where('end_date', '>=', $request->input('end_date'));
+                            });
                     });
                 } else {
                     // If no end date, check if the requested start date is within any existing configuration's range
-                    $query->where(function($q) use ($request) {
+                    $query->where(function ($q) use ($request) {
                         $q->where('start_date', '<=', $request->input('start_date'))
-                          ->where(function($inner) use ($request) {
-                              $inner->whereNull('end_date')
-                                   ->orWhere('end_date', '>=', $request->input('start_date'));
-                          });
+                            ->where(function ($inner) use ($request) {
+                                $inner->whereNull('end_date')
+                                    ->orWhere('end_date', '>=', $request->input('start_date'));
+                            });
                     });
                 }
             })
@@ -348,7 +383,7 @@ class ShiftConfigurationController extends ApiController
 
             return $this->successResponse($configuration, 'Shift configuration created successfully', 201);
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to create shift configuration: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to create shift configuration: '.$e->getMessage(), 500);
         }
     }
 
@@ -360,21 +395,27 @@ class ShiftConfigurationController extends ApiController
      *     operationId="getShiftConfigurationById",
      *     tags={"ShiftConfigurations"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the shift configuration",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift configuration details",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="object", ref="#/components/schemas/ShiftConfiguration")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - You do not have permission for this action"
@@ -395,15 +436,15 @@ class ShiftConfigurationController extends ApiController
         if ($user->isEmployee()) {
             // Employee can only view their own configurations
             $employee = $user->employee;
-            if (!$employee || $configuration->employee_id !== $employee->id) {
+            if (! $employee || $configuration->employee_id !== $employee->id) {
                 return $this->errorResponse('Unauthorized to view this configuration', 403);
             }
-        } else if ($user->isSupervisor()) {
+        } elseif ($user->isSupervisor()) {
             // Supervisor can only view configurations of their supervisees
             $employee = $user->employee;
             if ($employee) {
                 $superviseeIds = Employee::where('supervisor_id', $employee->id)->pluck('id')->toArray();
-                if (!in_array($configuration->employee_id, $superviseeIds)) {
+                if (! in_array($configuration->employee_id, $superviseeIds)) {
                     return $this->errorResponse('Unauthorized to view this configuration', 403);
                 }
             } else {
@@ -422,28 +463,37 @@ class ShiftConfigurationController extends ApiController
      *     operationId="updateShiftConfiguration",
      *     tags={"ShiftConfigurations"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the shift configuration to update",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="employee_id", type="integer", example=42, description="ID of the employee"),
      *             @OA\Property(property="shift_type_id", type="integer", example=3, description="ID of the shift type")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift configuration successfully updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="object", ref="#/components/schemas/ShiftConfiguration")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=400,
      *         description="Validation error"
@@ -485,25 +535,25 @@ class ShiftConfigurationController extends ApiController
             $existingConfig = ShiftConfiguration::where('employee_id', $employeeId)
                 ->where('shift_type_id', $shiftTypeId)
                 ->where('id', '!=', $id)
-                ->where(function($query) use ($startDate, $endDate) {
+                ->where(function ($query) use ($startDate, $endDate) {
                     // Handle date range overlap
                     if ($endDate) {
-                        $query->where(function($q) use ($startDate, $endDate) {
+                        $query->where(function ($q) use ($startDate, $endDate) {
                             $q->whereBetween('start_date', [$startDate, $endDate])
-                              ->orWhereBetween('end_date', [$startDate, $endDate])
-                              ->orWhere(function($inner) use ($startDate, $endDate) {
-                                  $inner->where('start_date', '<=', $startDate)
-                                       ->where('end_date', '>=', $endDate);
-                              });
+                                ->orWhereBetween('end_date', [$startDate, $endDate])
+                                ->orWhere(function ($inner) use ($startDate, $endDate) {
+                                    $inner->where('start_date', '<=', $startDate)
+                                        ->where('end_date', '>=', $endDate);
+                                });
                         });
                     } else {
                         // If no end date, check if the requested start date is within any existing configuration's range
-                        $query->where(function($q) use ($startDate) {
+                        $query->where(function ($q) use ($startDate) {
                             $q->where('start_date', '<=', $startDate)
-                              ->where(function($inner) use ($startDate) {
-                                  $inner->whereNull('end_date')
-                                       ->orWhere('end_date', '>=', $startDate);
-                              });
+                                ->where(function ($inner) use ($startDate) {
+                                    $inner->whereNull('end_date')
+                                        ->orWhere('end_date', '>=', $startDate);
+                                });
                         });
                     }
                 })
@@ -519,7 +569,7 @@ class ShiftConfigurationController extends ApiController
 
             return $this->successResponse($configuration, 'Shift configuration updated successfully');
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to update shift configuration: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to update shift configuration: '.$e->getMessage(), 500);
         }
     }
 
@@ -531,21 +581,27 @@ class ShiftConfigurationController extends ApiController
      *     operationId="deleteShiftConfiguration",
      *     tags={"ShiftConfigurations"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="ID of the shift configuration to delete",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift configuration successfully deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift configuration deleted successfully")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Forbidden - You do not have permission for this action"
@@ -565,9 +621,10 @@ class ShiftConfigurationController extends ApiController
 
         try {
             $configuration->delete();
+
             return $this->successResponse(null, 'Shift configuration deleted successfully');
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to delete shift configuration: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to delete shift configuration: '.$e->getMessage(), 500);
         }
     }
 }

@@ -16,20 +16,20 @@ return new class extends Migration
             $table->foreignId('shift_template_id')->nullable()->constrained('shift_templates')->onDelete('set null')->after('shift_type_id');
             $table->foreignId('schedule_run_id')->nullable()->constrained('schedule_runs')->onDelete('set null')->after('shift_template_id');
             $table->foreignId('location_id')->nullable()->constrained('locations')->onDelete('set null')->after('schedule_run_id');
-            
+
             // Make employee_id nullable (assignments will be in shift_assignments table)
             $table->foreignId('employee_id')->nullable()->change();
-            
+
             // Add capacity support
             $table->integer('capacity')->default(1)->after('total_hours');
-            
+
             // Add shift status
             $table->enum('shift_status', ['draft', 'published', 'cancelled'])->default('published')->after('capacity');
-            
+
             // Keep existing location fields for backward compatibility but mark as deprecated
             // These will be removed in a future migration once data is fully migrated to locations table
         });
-        
+
         // Add indexes for new fields
         Schema::table('shifts', function (Blueprint $table) {
             $table->index('shift_template_id');
@@ -52,20 +52,20 @@ return new class extends Migration
             $table->dropIndex(['shifts_location_id_index']);
             $table->dropIndex(['shifts_date_start_date_end_index']);
             $table->dropIndex(['shifts_shift_status_index']);
-            
+
             // Remove new columns
             $table->dropForeign(['shift_template_id']);
             $table->dropForeign(['schedule_run_id']);
             $table->dropForeign(['location_id']);
-            
+
             $table->dropColumn([
                 'shift_template_id',
-                'schedule_run_id', 
+                'schedule_run_id',
                 'location_id',
                 'capacity',
-                'shift_status'
+                'shift_status',
             ]);
-            
+
             // Restore employee_id as required
             $table->foreignId('employee_id')->nullable(false)->change();
         });

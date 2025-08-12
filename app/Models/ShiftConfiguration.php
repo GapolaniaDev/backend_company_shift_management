@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Model;
  *     schema="ShiftConfiguration",
  *     title="Shift Configuration",
  *     description="Employee-specific shift type configuration for scheduling",
+ *
  *     @OA\Property(property="id", type="integer", format="int64", example=1, description="Unique identifier"),
  *     @OA\Property(property="shift_type_id", type="integer", example=2, description="Associated shift type ID"),
  *     @OA\Property(property="employee_id", type="integer", example=5, description="Employee ID this configuration applies to"),

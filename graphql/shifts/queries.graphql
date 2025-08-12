@@ -1,0 +1,15 @@
+extend type Query {
+  shift(id: ID! @eq): Shift
+    @guard(with: ["api"])
+    @can(ability: "view", find: "id")
+    @find
+
+  shifts(
+    filter: ShiftFilterInput @spread
+    orderBy: [OrderByClause!] @orderBy
+  ): ShiftPaginator
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Shift")
+    @whereAuthCompany
+    @scope(name: "filterShifts", args: ["filter"])
+}

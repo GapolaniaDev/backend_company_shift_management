@@ -1,0 +1,21 @@
+# Common reusable input types
+
+input DateRange {
+  from: DateTime!
+  to: DateTime!
+}
+
+input PaginationInput {
+  first: Int = 25
+  page: Int = 1
+}
+
+input OrderByInput {
+  column: String!
+  order: SortOrder!
+}
+
+enum SortOrder {
+  ASC @enum(value: "asc")
+  DESC @enum(value: "desc")
+}

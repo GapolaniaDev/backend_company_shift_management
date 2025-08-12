@@ -2,8 +2,8 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Seeder;
 use App\Models\User;
+use Illuminate\Database\Seeder;
 
 class UserSeeder extends Seeder
 {
@@ -27,7 +27,7 @@ class UserSeeder extends Seeder
             ['name' => 'Alejandro Dognibene', 'email' => 'tflatley@example.net'],
             ['name' => 'Laura Palomeque', 'email' => 'wayne.walter@example.com'],
             ['name' => 'Tomas Casallas', 'email' => 'dkrajcik@example.net'],
-            ['name' => 'Paula Sanchez', 'email' => 'oreilly.herminio@example.com']
+            ['name' => 'Paula Sanchez', 'email' => 'oreilly.herminio@example.com'],
         ];
 
         foreach ($employees as $employee) {

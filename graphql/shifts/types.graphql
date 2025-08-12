@@ -1,0 +1,65 @@
+type Shift {
+  id: ID!
+  shift_type_id: Int!
+  employee_id: Int
+  date_start: DateTime!
+  date_end: DateTime!
+  date_start_timezone: String
+  date_end_timezone: String
+  total_hours: Float!
+  weekday_code: Int!
+  comments: String
+  replacement_id: Int
+  location: String
+  location_lat: Float
+  location_lng: Float
+  radius: Int
+  zoom: Int
+  clock_on_time: DateTime
+  clock_off_time: DateTime
+  clock_on_lat: Float
+  clock_on_lng: Float
+  clock_off_lat: Float
+  clock_off_lng: Float
+  timezone_start: String
+  timezone_end: String
+  state: Int!
+  shift_status: ShiftStatus!
+  created_at: DateTime!
+  updated_at: DateTime!
+
+  # Relations
+  shiftType: ShiftType @belongsTo
+  employee: Employee @belongsTo
+  replacement: Employee @belongsTo
+}
+
+type ShiftPaginator {
+  paginatorInfo: PaginatorInfo!
+  data: [Shift!]!
+}
+
+input ShiftUpsertInput {
+  shift_type_id: Int!
+  employee_id: Int
+  date_start: DateTime!
+  date_end: DateTime!
+  date_start_timezone: String
+  date_end_timezone: String
+  total_hours: Float!
+  weekday_code: Int!
+  comments: String
+  replacement_id: Int
+  location: String
+  location_lat: Float
+  location_lng: Float
+  radius: Int
+  zoom: Int
+}
+
+input ShiftFilterInput {
+  status: ShiftStatus
+  dateRange: DateRange
+  employeeId: Int
+  shiftTypeId: Int
+}

@@ -14,26 +14,26 @@ return new class extends Migration
         Schema::create('template_exceptions', function (Blueprint $table) {
             $table->id();
             $table->foreignId('shift_template_id')->constrained('shift_templates')->onDelete('cascade');
-            
+
             // Exception date
             $table->date('exception_date');
-            
+
             // Exception type
             $table->enum('exception_type', ['cancel', 'modify', 'add']);
-            
+
             // Modified shift details (for 'modify' and 'add' types)
             $table->time('start_time')->nullable();
             $table->time('end_time')->nullable();
             $table->decimal('hours', 5, 2)->nullable();
             $table->integer('capacity')->nullable();
             $table->foreignId('location_id')->nullable()->constrained('locations')->onDelete('set null');
-            
+
             // Reason for exception
             $table->string('reason')->nullable();
             $table->text('notes')->nullable();
-            
+
             $table->timestamps();
-            
+
             $table->index(['shift_template_id', 'exception_date']);
             $table->unique(['shift_template_id', 'exception_date']);
         });

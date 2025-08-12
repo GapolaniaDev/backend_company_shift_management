@@ -1,0 +1,24 @@
+type ShiftType {
+  id: ID!
+  name: String!
+  description: String
+  weekly_hours: Float
+  schedule: JSON
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relations
+  shifts: [Shift!]! @hasMany
+}
+
+type ShiftTypePaginator {
+  paginatorInfo: PaginatorInfo!
+  data: [ShiftType!]!
+}
+
+input ShiftTypeUpsertInput {
+  name: String!
+  description: String
+  weekly_hours: Float
+  schedule: JSON
+}

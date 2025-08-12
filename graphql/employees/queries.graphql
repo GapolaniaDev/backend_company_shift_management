@@ -1,0 +1,13 @@
+extend type Query {
+  employee(id: ID! @eq): Employee
+    @guard(with: ["api"])
+    @can(ability: "view", find: "id")
+    @find
+
+  employees(
+    orderBy: [OrderByClause!] @orderBy
+  ): EmployeePaginator
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Employee")
+    @whereAuthCompany
+}

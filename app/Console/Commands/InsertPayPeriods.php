@@ -35,7 +35,7 @@ class InsertPayPeriods extends Command
             'end_date' => $endDate,
             'created_at' => now(),
             'updated_at' => now(),
-            'fiscal_week' => 10
+            'fiscal_week' => 10,
         ]);
 
         $this->info('Pay periods inserted successfully.');
