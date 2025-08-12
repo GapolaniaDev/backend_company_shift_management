@@ -21,3 +21,11 @@ yarn-error.log
 .DS_Store
 
 .aider*
+
+# Security - Private keys and certificates
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+laravel-key.pem
