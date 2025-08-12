@@ -44,4 +44,28 @@ class Company extends Model
     {
         return $this->hasMany(PayPeriod::class);
     }
+
+    /**
+     * Get locations for this company
+     */
+    public function locations(): HasMany
+    {
+        return $this->hasMany(Location::class);
+    }
+
+    /**
+     * Get shift templates for this company
+     */
+    public function shiftTemplates(): HasMany
+    {
+        return $this->hasMany(ShiftTemplate::class);
+    }
+
+    /**
+     * Get schedule runs for this company
+     */
+    public function scheduleRuns(): HasMany
+    {
+        return $this->hasMany(ScheduleRun::class);
+    }
 }

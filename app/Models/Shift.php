@@ -152,6 +152,54 @@ class Shift extends Model
     }
 
     /**
+     * Get the shift template this shift was generated from
+     */
+    public function shiftTemplate()
+    {
+        return $this->belongsTo(ShiftTemplate::class);
+    }
+
+    /**
+     * Get the schedule run this shift belongs to
+     */
+    public function scheduleRun()
+    {
+        return $this->belongsTo(ScheduleRun::class);
+    }
+
+    /**
+     * Get the location for this shift
+     */
+    public function location()
+    {
+        return $this->belongsTo(Location::class);
+    }
+
+    /**
+     * Get shift assignments for this shift
+     */
+    public function shiftAssignments()
+    {
+        return $this->hasMany(ShiftAssignment::class);
+    }
+
+    /**
+     * Get primary assignment for this shift
+     */
+    public function primaryAssignment()
+    {
+        return $this->hasOne(ShiftAssignment::class)->where('assignment_type', 'primary');
+    }
+
+    /**
+     * Get backup assignments for this shift
+     */
+    public function backupAssignments()
+    {
+        return $this->hasMany(ShiftAssignment::class)->where('assignment_type', 'backup');
+    }
+
+    /**
      * Validate updating the shift.
      */
     public function validateBeforeSave(array $attributes)
