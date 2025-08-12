@@ -4,69 +4,44 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-/**
- * @OA\Schema(
- *     schema="Company",
- *     title="Company",
- *     description="Company model representing client companies",
- *     @OA\Property(property="id", type="integer", description="Company ID"),
- *     @OA\Property(property="name", type="string", description="Company name"),
- *     @OA\Property(property="description", type="string", description="Company description"),
- *     @OA\Property(property="address", type="string", description="Company address"),
- *     @OA\Property(property="phone", type="string", description="Company phone"),
- *     @OA\Property(property="email", type="string", description="Company email"),
- *     @OA\Property(property="is_active", type="boolean", description="Whether the company is active"),
- *     @OA\Property(property="created_at", type="string", format="date-time", description="Creation timestamp"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", description="Last update timestamp")
- * )
- */
 class Company extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'name',
-        'description',
-        'address',
-        'phone',
-        'email',
-        'is_active',
+        'slug',
     ];
 
-    protected $casts = [
-        'is_active' => 'boolean',
-    ];
-
-    /**
-     * Get the users for the company.
-     */
-    public function users()
+    public function users(): HasMany
     {
         return $this->hasMany(User::class);
     }
 
-    /**
-     * Get the employees for the company.
-     */
-    public function employees()
+    public function employees(): HasMany
     {
         return $this->hasMany(Employee::class);
     }
 
-    /**
-     * Get the shifts for the company.
-     */
-    public function shifts()
+    public function shiftTypes(): HasMany
+    {
+        return $this->hasMany(ShiftType::class);
+    }
+
+    public function shiftConfigurations(): HasMany
+    {
+        return $this->hasMany(ShiftConfiguration::class);
+    }
+
+    public function shifts(): HasMany
     {
         return $this->hasMany(Shift::class);
     }
 
-    /**
-     * Scope a query to only include active companies.
-     */
-    public function scopeActive($query)
+    public function payPeriods(): HasMany
     {
-        return $query->where('is_active', true);
+        return $this->hasMany(PayPeriod::class);
     }
 }

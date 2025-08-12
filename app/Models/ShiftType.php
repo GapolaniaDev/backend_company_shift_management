@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -10,7 +11,6 @@ use Illuminate\Database\Eloquent\Model;
  *     schema="ShiftType",
  *     title="Shift Type",
  *     description="Shift type definition with scheduling information",
- *
  *     @OA\Property(property="id", type="integer", format="int64", example=1, description="Unique identifier"),
  *     @OA\Property(property="name", type="string", example="Morning Shift", description="Name of the shift type"),
  *     @OA\Property(property="description", type="string", example="Standard morning shift from 8am-4pm", description="Detailed description of shift type"),
@@ -20,17 +20,15 @@ use Illuminate\Database\Eloquent\Model;
  *         type="array",
  *         description="Weekly schedule configuration as a JSON array",
  *         example={"Monday": {"start": "08:00", "end": "16:00"}, "Tuesday": {"start": "08:00", "end": "16:00"}},
- *
  *         @OA\Items(type="object")
  *     ),
- *
  *     @OA\Property(property="created_at", type="string", format="date-time", description="Timestamp when record was created"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", description="Timestamp when record was last updated")
  * )
  */
 class ShiftType extends Model
 {
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     protected $casts = [
         'schedule' => 'array',
@@ -47,6 +45,7 @@ class ShiftType extends Model
         'weekly_hours',
         'description',
         'schedule',
+        'company_id'
     ];
 
     /**

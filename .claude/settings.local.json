@@ -1,16 +1,22 @@
 {
   "permissions": {
     "allow": [
-      "Bash(docker-compose:*)",
       "Bash(composer:*)",
-      "Bash(php:*)",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git log:*)",
+      "Bash(git status:*)",
+      "Bash(grep:*)",
+      "Bash(head:*)",
+      "Bash(ls:*)",
       "Bash(mkdir:*)",
+      "Bash(php artisan:*)",
+      "Bash(python3:*)",
       "Bash(find:*)",
-      "Bash(touch:*)",
-      "Bash(vendor/bin/pint:*)",
-      "Bash(curl:*)",
-      "Bash(docker inspect:*)",
-      "Bash(git add:*)"
+      "WebFetch(domain:dimeo.com.au)",
+      "WebFetch(domain:www.corporateclean.com.au)",
+      "WebFetch(domain:hipages.com.au)",
+      "Bash(docker-compose:*)"
     ],
     "deny": []
   }

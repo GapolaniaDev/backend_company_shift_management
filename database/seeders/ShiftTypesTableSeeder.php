@@ -4,104 +4,115 @@ namespace Database\Seeders;
 
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
+use App\Models\Company;
 
 class ShiftTypesTableSeeder extends Seeder
 {
     public function run()
     {
+        // Get company IDs
+        $defaultCompany = Company::where('slug', 'default')->first();
+        $dimeoCompany = Company::where('slug', 'dimeo')->first();
+        $corporateCleanCompany = Company::where('slug', 'corporate-clean')->first();
+        $bioGreenCompany = Company::where('slug', 'bio-green-family')->first();
+
         $shiftTypes = [
-            'FT Day Cleaner (E.L)' => [
-                'Mon' => ['start' => '10:00:00', 'finish' => '14:00:00'],
-                'Tue' => ['start' => '10:00:00', 'finish' => '14:00:00'],
-                'Wed' => ['start' => '10:00:00', 'finish' => '14:00:00'],
-                'Thu' => ['start' => '10:00:00', 'finish' => '14:00:00'],
-                'Fri' => ['start' => '10:00:00', 'finish' => '14:00:00'],
+            // Default Company Shift Types
+            [
+                'name' => 'Day Shift',
+                'description' => 'Standard day cleaning shift',
+                'weekly_hours' => 40,
+                'schedule' => json_encode([
+                    'Monday' => ['start' => '09:00', 'end' => '17:00'],
+                    'Tuesday' => ['start' => '09:00', 'end' => '17:00'],
+                    'Wednesday' => ['start' => '09:00', 'end' => '17:00'],
+                    'Thursday' => ['start' => '09:00', 'end' => '17:00'],
+                    'Friday' => ['start' => '09:00', 'end' => '17:00'],
+                ]),
+                'company_id' => $defaultCompany->id,
             ],
-            'FT Day Cleaner (T.M)' => [
-                'Mon' => ['start' => '13:00:00', 'finish' => '17:00:00'],
-                'Tue' => ['start' => '13:00:00', 'finish' => '17:00:00'],
-                'Wed' => ['start' => '13:00:00', 'finish' => '17:00:00'],
-                'Thu' => ['start' => '13:00:00', 'finish' => '17:00:00'],
-                'Fri' => ['start' => '13:00:00', 'finish' => '17:00:00'],
+            
+            // Dimeo Company Shift Types  
+            [
+                'name' => 'Morning Commercial Clean',
+                'description' => 'Early morning commercial cleaning for Dimeo clients',
+                'weekly_hours' => 35,
+                'schedule' => json_encode([
+                    'Monday' => ['start' => '06:00', 'end' => '13:00'],
+                    'Tuesday' => ['start' => '06:00', 'end' => '13:00'],
+                    'Wednesday' => ['start' => '06:00', 'end' => '13:00'],
+                    'Thursday' => ['start' => '06:00', 'end' => '13:00'],
+                    'Friday' => ['start' => '06:00', 'end' => '13:00'],
+                ]),
+                'company_id' => $dimeoCompany->id,
             ],
-            'PT Tenancy Cleaner 1 (P.M)' => [
-                'Mon' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Tue' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Wed' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Thu' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Fri' => ['start' => '18:00:00', 'finish' => '22:00:00'],
+            [
+                'name' => 'Evening Office Clean',
+                'description' => 'Evening office cleaning for Dimeo clients',
+                'weekly_hours' => 25,
+                'schedule' => json_encode([
+                    'Monday' => ['start' => '18:00', 'end' => '23:00'],
+                    'Wednesday' => ['start' => '18:00', 'end' => '23:00'],
+                    'Friday' => ['start' => '18:00', 'end' => '23:00'],
+                ]),
+                'company_id' => $dimeoCompany->id,
             ],
-            'PT Tenancy Cleaner 2 (K.A)' => [
-                'Mon' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Tue' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Wed' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Thu' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Fri' => ['start' => '18:00:00', 'finish' => '22:00:00'],
+            
+            // Corporate Clean Company Shift Types
+            [
+                'name' => 'Adelaide Day Clean',
+                'description' => 'Standard day shift for Corporate Clean Adelaide',
+                'weekly_hours' => 38,
+                'schedule' => json_encode([
+                    'Monday' => ['start' => '08:00', 'end' => '16:00'],
+                    'Tuesday' => ['start' => '08:00', 'end' => '16:00'],
+                    'Wednesday' => ['start' => '08:00', 'end' => '16:00'],
+                    'Thursday' => ['start' => '08:00', 'end' => '16:00'],
+                    'Friday' => ['start' => '08:00', 'end' => '15:00'],
+                ]),
+                'company_id' => $corporateCleanCompany->id,
             ],
-            'PT Tenancy Cleaner 3 (J.Z)' => [
-                'Mon' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Tue' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Wed' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Thu' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Fri' => ['start' => '18:00:00', 'finish' => '22:00:00'],
+            [
+                'name' => 'Medical Center Clean',
+                'description' => 'Specialized cleaning for medical centers',
+                'weekly_hours' => 20,
+                'schedule' => json_encode([
+                    'Monday' => ['start' => '17:00', 'end' => '21:00'],
+                    'Wednesday' => ['start' => '17:00', 'end' => '21:00'],
+                    'Friday' => ['start' => '17:00', 'end' => '21:00'],
+                    'Saturday' => ['start' => '08:00', 'end' => '16:00'],
+                ]),
+                'company_id' => $corporateCleanCompany->id,
             ],
-            'PT Tenancy Cleaner 4 (J.J)' => [
-                'Mon' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Tue' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Wed' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Thu' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Fri' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-            ],
-            'PT Tenancy Cleaner 5 (A.B)' => [
-                'Mon' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Tue' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Wed' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Thu' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Fri' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-            ],
-            'PT Tenancy Cleaner 6 (A.D)' => [
-                'Mon' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Tue' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Wed' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Thu' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Fri' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-            ],
-            'PT Nigth Tolilet Cleaner (L.P)' => [
-                'Mon' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Tue' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Wed' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Thu' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Fri' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-            ],
-            'PT Night Supervisor Cleaner (T.C)' => [
-                'Mon' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Tue' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Wed' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Thu' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Fri' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-            ],
-            'PT Replacement Cleaner' => [
-                'Mon' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Tue' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Wed' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Thu' => ['start' => '18:00:00', 'finish' => '22:00:00'],
-                'Fri' => ['start' => '18:00:00', 'finish' => '22:00:00'],
+            
+            // Bio Green Family Shift Types
+            [
+                'name' => 'Eco-Friendly Clean',
+                'description' => 'Environmentally conscious cleaning services for Bio Green Family',
+                'weekly_hours' => 40,
+                'schedule' => json_encode([
+                    'Monday' => ['start' => '07:00', 'end' => '15:00'],
+                    'Tuesday' => ['start' => '07:00', 'end' => '15:00'],
+                    'Wednesday' => ['start' => '07:00', 'end' => '15:00'],
+                    'Thursday' => ['start' => '07:00', 'end' => '15:00'],
+                    'Friday' => ['start' => '07:00', 'end' => '15:00'],
+                ]),
+                'company_id' => $bioGreenCompany->id,
             ],
         ];
 
-        foreach ($shiftTypes as $type => $schedule) {
-            $scheduleJson = json_encode(array_map(function ($times) {
-                return [
-                    'time_start' => date('H:i:s', strtotime($times['start'])),
-                    'time_finish' => date('H:i:s', strtotime($times['finish'])),
-                ];
-            }, $schedule));
-
+        foreach ($shiftTypes as $shiftType) {
             DB::table('shift_types')->insert([
-                'name' => $type,
-                'weekly_hours' => 0,
-                'schedule' => $scheduleJson,
+                'name' => $shiftType['name'],
+                'description' => $shiftType['description'],
+                'weekly_hours' => $shiftType['weekly_hours'],
+                'schedule' => $shiftType['schedule'],
+                'company_id' => $shiftType['company_id'],
+                'created_at' => now(),
+                'updated_at' => now(),
             ]);
         }
+
+        $this->command->info('✅ Shift types created and distributed across companies');
     }
 }

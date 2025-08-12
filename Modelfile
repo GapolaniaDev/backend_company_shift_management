@@ -1,0 +1,6 @@
+FROM gpt-oss:20b
+PARAMETER num_ctx 2048
+PARAMETER num_batch 8
+# Si ves caída por memoria, descomenta:
+# PARAMETER f16_kv false
+TEMPLATE "{{ .Prompt }}"

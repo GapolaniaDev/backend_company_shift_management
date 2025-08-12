@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -66,7 +67,7 @@ use Illuminate\Database\Eloquent\Model;
  */
 class Shift extends Model
 {
-    use HasFactory;
+    use BelongsToCompany, HasFactory;
 
     /**
      * State constants for shifts
@@ -99,6 +100,7 @@ class Shift extends Model
         'radius',
         'zoom',
         'state',
+        'company_id',
     ];
 
     protected $casts = [
@@ -176,6 +178,19 @@ class Shift extends Model
         // Validate zoom (must be greater or equal to 0)
         if (isset($attributes['zoom']) && $attributes['zoom'] < 0) {
             throw new \Exception('Zoom must be greater or equal to 0.');
+        }
+
+        // Validate replacement_id belongs to same company
+        if (isset($attributes['replacement_id']) && $attributes['replacement_id']) {
+            $replacementEmployee = Employee::find($attributes['replacement_id']);
+            if (!$replacementEmployee) {
+                throw new \Exception('Replacement employee not found.');
+            }
+            
+            $currentCompanyId = $this->company_id ?? app('currentCompanyId');
+            if ($replacementEmployee->company_id !== $currentCompanyId) {
+                throw new \Exception('Replacement employee must belong to the same company.');
+            }
         }
 
         return true;
