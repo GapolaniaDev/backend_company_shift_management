@@ -16,7 +16,7 @@ return new class extends Migration
             $table->dropColumn([
                 'status',
                 'date_start_employee',
-                'date_finish_employee'
+                'date_finish_employee',
             ]);
 
             // Añadir nuevos campos para timezones
@@ -41,7 +41,7 @@ return new class extends Migration
             // Eliminar los nuevos campos
             $table->dropColumn([
                 'date_start_timezone',
-                'date_end_timezone'
+                'date_end_timezone',
             ]);
         });
     }

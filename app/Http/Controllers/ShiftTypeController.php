@@ -14,26 +14,26 @@ class ShiftTypeController extends ApiController
     public function index(Request $request)
     {
         [$page, $pageSize] = $this->getPageParams($request);
-        
+
         $query = ShiftType::query();
-        
+
         // Search by name
         if ($request->has('search')) {
             $search = $request->input('search');
             $query->where('name', 'like', "%{$search}%");
         }
-        
+
         // Sort
         $sortBy = $request->input('sort_by', 'name');
         $sortDir = $request->input('sort_dir', 'asc');
         $allowedSortFields = ['name', 'weekly_hours', 'created_at'];
-        
+
         if (in_array($sortBy, $allowedSortFields)) {
             $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
         }
-        
+
         $shiftTypes = $query->paginate($pageSize, ['*'], 'page', $page);
-        
+
         return $this->paginatedResponse($shiftTypes);
     }
 
@@ -58,10 +58,10 @@ class ShiftTypeController extends ApiController
                 'weekly_hours' => $request->weekly_hours,
                 'schedule' => $request->schedule,
             ]);
-            
+
             return $this->successResponse($shiftType, 'Shift type created successfully', 201);
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to create shift type: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to create shift type: '.$e->getMessage(), 500);
         }
     }
 
@@ -71,7 +71,7 @@ class ShiftTypeController extends ApiController
     public function show(string $id)
     {
         $shiftType = ShiftType::with('shiftConfigurations')->findOrFail($id);
-        
+
         return $this->successResponse($shiftType);
     }
 
@@ -81,9 +81,9 @@ class ShiftTypeController extends ApiController
     public function update(Request $request, string $id)
     {
         $shiftType = ShiftType::findOrFail($id);
-        
+
         $validator = Validator::make($request->all(), [
-            'name' => 'sometimes|required|string|max:50|unique:shift_types,name,' . $id,
+            'name' => 'sometimes|required|string|max:50|unique:shift_types,name,'.$id,
             'weekly_hours' => 'sometimes|required|numeric|min:0|max:168',
             'schedule' => 'sometimes|required|json',
         ]);
@@ -94,10 +94,10 @@ class ShiftTypeController extends ApiController
 
         try {
             $shiftType->update($request->all());
-            
+
             return $this->successResponse($shiftType, 'Shift type updated successfully');
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to update shift type: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to update shift type: '.$e->getMessage(), 500);
         }
     }
 
@@ -107,22 +107,23 @@ class ShiftTypeController extends ApiController
     public function destroy(string $id)
     {
         $shiftType = ShiftType::findOrFail($id);
-        
+
         // Check if any shifts are using this shift type
         if ($shiftType->shifts()->count() > 0) {
             return $this->errorResponse('Cannot delete this shift type as it is being used by shifts.', 422);
         }
-        
+
         // Check if any configurations are using this shift type
         if ($shiftType->shiftConfigurations()->count() > 0) {
             return $this->errorResponse('Cannot delete this shift type as it is being used in shift configurations.', 422);
         }
-        
+
         try {
             $shiftType->delete();
+
             return $this->successResponse(null, 'Shift type deleted successfully');
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to delete shift type: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to delete shift type: '.$e->getMessage(), 500);
         }
     }
 }

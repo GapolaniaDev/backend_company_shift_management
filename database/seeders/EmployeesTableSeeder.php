@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use Faker\Factory as Faker;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -30,7 +29,7 @@ class EmployeesTableSeeder extends Seeder
             ['name' => 'Alejandro Dognibene', 'email' => 'tflatley@example.net'],
             ['name' => 'Laura Palomeque', 'email' => 'wayne.walter@example.com'],
             ['name' => 'Tomas Casallas', 'email' => 'dkrajcik@example.net'],
-            ['name' => 'Paula Sanchez', 'email' => 'oreilly.herminio@example.com']
+            ['name' => 'Paula Sanchez', 'email' => 'oreilly.herminio@example.com'],
         ];
         $userIdCounter = 1;
         $supervisorCode = 1;

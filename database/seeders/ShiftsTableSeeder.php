@@ -4,7 +4,6 @@ namespace Database\Seeders;
 
 use Carbon\Carbon;
 use Faker\Factory as Faker;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 
@@ -49,7 +48,7 @@ class ShiftsTableSeeder extends Seeder
                     );
 
                     // Calculate end time based on shift hours.
-                    $endTime = (clone $startTime)->addHours((int)$hours)->addMinutes(($hours - (int)$hours) * 60);
+                    $endTime = (clone $startTime)->addHours((int) $hours)->addMinutes(($hours - (int) $hours) * 60);
 
                     // Generate random location within Adelaide bounds.
                     $locationLat = $faker->randomFloat(15, $adelaideBounds['min_lat'], $adelaideBounds['max_lat']);
@@ -71,7 +70,7 @@ class ShiftsTableSeeder extends Seeder
                         'location_lat' => $locationLat, // Added field
                         'location_lng' => $locationLng, // Added field
                         'radius' => '100',
-                        'zoom' => '15'
+                        'zoom' => '15',
                     ]);
                 }
             }

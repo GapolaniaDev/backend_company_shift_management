@@ -1,0 +1,13 @@
+extend type Query {
+  shiftType(id: ID! @eq): ShiftType
+    @guard(with: ["api"])
+    @can(ability: "view", find: "id")
+    @find
+
+  shiftTypes(
+    orderBy: [OrderByClause!] @orderBy
+  ): ShiftTypePaginator
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\ShiftType")
+    @whereAuthCompany
+}

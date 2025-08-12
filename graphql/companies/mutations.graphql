@@ -1,0 +1,6 @@
+# Company mutations can be added here in the future
+# extend type Mutation {
+#   createCompany(input: CompanyInput!): Company
+#   updateCompany(input: CompanyUpdateInput!): Company  
+#   deleteCompany(id: ID!): Boolean
+# }

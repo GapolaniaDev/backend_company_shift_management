@@ -2,13 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Carbon\Carbon;
-use App\Models\Shift;
 use App\Models\Employee;
-use App\Models\ShiftType;
-use Illuminate\Support\Facades\Validator;
+use App\Models\Shift;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Validator;
 
 /**
  * @OA\Tag(
@@ -43,45 +42,58 @@ class ShiftController extends ApiController
      *     operationId="listAllShifts",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="shift_type_id",
      *         in="query",
      *         description="Filter by shift type ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Field to sort by",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"date_start", "date_end", "created_at", "total_hours"}, default="date_start")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="sort_dir",
      *         in="query",
      *         description="Sort direction",
      *         required=false,
+     *
      *         @OA\Schema(type="string", enum={"asc", "desc"}, default="desc")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="List of shifts for the authenticated user",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array", @OA\Items(
      *                 @OA\Property(property="id", type="integer", example=1),
@@ -102,6 +114,7 @@ class ShiftController extends ApiController
      *             ))
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"
@@ -162,6 +175,7 @@ class ShiftController extends ApiController
                 $shift->employee->first_name,
                 $shift->employee->last_name
             );
+
             return $shift;
         });
 
@@ -176,45 +190,58 @@ class ShiftController extends ApiController
      *     operationId="getMyShifts",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="date_from",
      *         in="query",
      *         description="Start date (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="date_to",
      *         in="query",
      *         description="End date (YYYY-MM-DD)",
      *         required=false,
+     *
      *         @OA\Schema(type="string", format="date")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="shift_type_id",
      *         in="query",
      *         description="Filter by shift type ID",
      *         required=false,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Parameter(
      *         name="page",
      *         in="query",
      *         description="Current page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=1)
      *     ),
+     *
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
      *         description="Items per page",
      *         required=false,
+     *
      *         @OA\Schema(type="integer", default=15)
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Paginated list of user's shifts",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array", @OA\Items(
      *                 @OA\Property(property="id", type="integer", example=1),
@@ -251,6 +278,7 @@ class ShiftController extends ApiController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"
@@ -258,7 +286,9 @@ class ShiftController extends ApiController
      *     @OA\Response(
      *         response=404,
      *         description="User has no employee profile",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Your user account is not linked to an employee profile.")
      *         )
@@ -270,7 +300,7 @@ class ShiftController extends ApiController
         $user = $request->user();
         $employee = $user->employee;
 
-        if (!$employee) {
+        if (! $employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
         }
 
@@ -297,6 +327,7 @@ class ShiftController extends ApiController
                 $employee->first_name,
                 $employee->last_name
             );
+
             return $shift;
         });
 
@@ -311,10 +342,13 @@ class ShiftController extends ApiController
      *     operationId="getTeamShifts",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="List of team shifts",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="array", @OA\Items(
      *                 @OA\Property(property="id", type="integer", example=1),
@@ -326,10 +360,13 @@ class ShiftController extends ApiController
      *             ))
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=403,
      *         description="Unauthorized",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthorized")
      *         )
@@ -341,7 +378,7 @@ class ShiftController extends ApiController
         $user = $request->user();
         $employee = $user->employee;
 
-        if (!$employee) {
+        if (! $employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 400);
         }
 
@@ -382,6 +419,7 @@ class ShiftController extends ApiController
                 $shift->employee->first_name,
                 $shift->employee->last_name
             );
+
             return $shift;
         });
 
@@ -396,9 +434,12 @@ class ShiftController extends ApiController
      *     operationId="createShift",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="employee_id", type="integer", example=5),
      *             @OA\Property(property="shift_type_id", type="integer", example=1),
      *             @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z"),
@@ -406,10 +447,13 @@ class ShiftController extends ApiController
      *             @OA\Property(property="location", type="string", example="Central Office")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="Shift successfully created",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
@@ -421,10 +465,13 @@ class ShiftController extends ApiController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation error"),
      *             @OA\Property(property="errors", type="object")
@@ -457,7 +504,7 @@ class ShiftController extends ApiController
             if (isset($data['date_start'])) {
                 $data['date_start'] = Carbon::parse($data['date_start'])->setTimezone('UTC');
             }
-            
+
             if (isset($data['date_end'])) {
                 $data['date_end'] = Carbon::parse($data['date_end'])->setTimezone('UTC');
             }
@@ -473,15 +520,15 @@ class ShiftController extends ApiController
 
             return $this->successResponse($shift, 'Shift created successfully', 201);
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to create shift: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to create shift: '.$e->getMessage(), 500);
         }
     }
-    
+
     /**
      * Get timezone from coordinates using TimeZoneDB API
-     * 
-     * @param float $latitude
-     * @param float $longitude
+     *
+     * @param  float  $latitude
+     * @param  float  $longitude
      * @return string Timezone name (e.g. 'America/New_York') or 'UTC' if not found
      */
     private function getTimezoneFromCoordinates($latitude, $longitude)
@@ -492,32 +539,32 @@ class ShiftController extends ApiController
             if ($timezone) {
                 return $timezone;
             }
-            
+
             // Si el método local falla, intentamos con la API de TimeZoneDB
             $apiKey = env('TIMEZONEDB_API_KEY', ''); // API key de TimeZoneDB
-            
+
             if (empty($apiKey)) {
                 // Si no hay API key, intentamos con otra API gratuita
                 $url = "https://api.ipgeolocation.io/timezone?lat={$latitude}&long={$longitude}";
                 $response = file_get_contents($url);
                 $data = json_decode($response, true);
-                
-                if (isset($data['timezone']) && !empty($data['timezone'])) {
+
+                if (isset($data['timezone']) && ! empty($data['timezone'])) {
                     return $data['timezone'];
                 }
-                
+
                 // Si todo falla, devolvemos UTC
                 return 'UTC';
             }
-            
+
             $url = "http://api.timezonedb.com/v2.1/get-time-zone?key={$apiKey}&format=json&by=position&lat={$latitude}&lng={$longitude}";
             $response = file_get_contents($url);
             $data = json_decode($response, true);
-            
+
             if ($data && isset($data['status']) && $data['status'] === 'OK' && isset($data['zoneName'])) {
                 return $data['zoneName'];
             }
-            
+
             // Si falla, devolvemos UTC
             return 'UTC';
         } catch (\Exception $e) {
@@ -525,13 +572,13 @@ class ShiftController extends ApiController
             return 'UTC';
         }
     }
-    
+
     /**
      * Get timezone from coordinates using PHP's DateTimeZone class
      * This method does not require external APIs but is less accurate
-     * 
-     * @param float $latitude
-     * @param float $longitude
+     *
+     * @param  float  $latitude
+     * @param  float  $longitude
      * @return string|null Timezone name or null if not found
      */
     private function getTimezoneFromCoordinatesLocal($latitude, $longitude)
@@ -539,33 +586,33 @@ class ShiftController extends ApiController
         try {
             // Get all timezone identifiers
             $timezones = \DateTimeZone::listIdentifiers(\DateTimeZone::ALL);
-            
+
             // Set a very large distance initially
             $minDistance = PHP_INT_MAX;
             $closestTimezone = null;
-            
+
             // Loop through each timezone
             foreach ($timezones as $timezone) {
                 $tz = new \DateTimeZone($timezone);
                 $location = $tz->getLocation();
-                
-                if (!$location) {
+
+                if (! $location) {
                     continue;
                 }
-                
+
                 $tzLatitude = $location['latitude'];
                 $tzLongitude = $location['longitude'];
-                
+
                 // Calculate the distance between input coordinates and timezone coordinates
                 $distance = $this->calculateDistance($latitude, $longitude, $tzLatitude, $tzLongitude);
-                
+
                 // Update closest timezone if this one is closer
                 if ($distance < $minDistance) {
                     $minDistance = $distance;
                     $closestTimezone = $timezone;
                 }
             }
-            
+
             return $closestTimezone;
         } catch (\Exception $e) {
             return null;
@@ -580,17 +627,22 @@ class ShiftController extends ApiController
      *     operationId="getShift",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Shift ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift details",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
@@ -602,10 +654,13 @@ class ShiftController extends ApiController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Shift not found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Shift not found")
      *         )
@@ -622,15 +677,15 @@ class ShiftController extends ApiController
         if ($user->isEmployee()) {
             // Employee can only view their own shifts
             $employee = $user->employee;
-            if (!$employee || $shift->employee_id !== $employee->id) {
+            if (! $employee || $shift->employee_id !== $employee->id) {
                 return $this->errorResponse('Unauthorized to view this shift', 403);
             }
-        } else if ($user->isSupervisor()) {
+        } elseif ($user->isSupervisor()) {
             // Supervisor can only view shifts of their supervisees
             $employee = $user->employee;
             if ($employee) {
                 $superviseeIds = Employee::where('supervisor_id', $employee->id)->pluck('id')->toArray();
-                if (!in_array($shift->employee_id, $superviseeIds)) {
+                if (! in_array($shift->employee_id, $superviseeIds)) {
                     return $this->errorResponse('Unauthorized to view this shift', 403);
                 }
             } else {
@@ -643,21 +698,21 @@ class ShiftController extends ApiController
             $shift->employee->first_name,
             $shift->employee->last_name
         );
-        
+
         // Add local times in their respective timezones
         if ($shift->clock_on_time) {
             $shift->local_clock_on_time = $shift->getLocalClockOnTime()->toDateTimeString();
         }
-        
+
         if ($shift->clock_off_time) {
             $shift->local_clock_off_time = $shift->getLocalClockOffTime()->toDateTimeString();
         }
-        
+
         // Add shift start/end times in their local timezones
         if ($shift->date_start) {
             $shift->local_date_start = $shift->getLocalStartTime()->toDateTimeString();
         }
-        
+
         if ($shift->date_end) {
             $shift->local_date_end = $shift->getLocalEndTime()->toDateTimeString();
         }
@@ -673,26 +728,34 @@ class ShiftController extends ApiController
      *     operationId="updateShift",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Shift ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="employee_id", type="integer", example=5),
      *             @OA\Property(property="shift_type_id", type="integer", example=1),
      *             @OA\Property(property="date_start", type="string", format="date-time", example="2023-10-12T09:00:00Z"),
      *             @OA\Property(property="date_end", type="string", format="date-time", example="2023-10-12T17:00:00Z")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift successfully updated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="data", type="object")
      *         )
@@ -726,7 +789,7 @@ class ShiftController extends ApiController
             if (isset($data['date_start'])) {
                 $data['date_start'] = Carbon::parse($data['date_start'])->setTimezone('UTC');
             }
-            
+
             if (isset($data['date_end'])) {
                 $data['date_end'] = Carbon::parse($data['date_end'])->setTimezone('UTC');
             }
@@ -742,7 +805,7 @@ class ShiftController extends ApiController
 
             return $this->successResponse($shift, 'Shift updated successfully');
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to update shift: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to update shift: '.$e->getMessage(), 500);
         }
     }
 
@@ -754,17 +817,22 @@ class ShiftController extends ApiController
      *     operationId="deleteShift",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Shift ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift successfully deleted",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Shift successfully deleted")
      *         )
@@ -777,9 +845,10 @@ class ShiftController extends ApiController
 
         try {
             $shift->delete();
+
             return $this->successResponse(null, 'Shift deleted successfully');
         } catch (\Exception $e) {
-            return $this->errorResponse('Failed to delete shift: ' . $e->getMessage(), 500);
+            return $this->errorResponse('Failed to delete shift: '.$e->getMessage(), 500);
         }
     }
 
@@ -791,10 +860,13 @@ class ShiftController extends ApiController
      *     operationId="getTodayShift",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Shift found",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
@@ -815,14 +887,18 @@ class ShiftController extends ApiController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="No shift for today",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="No shift found for today")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"
@@ -834,7 +910,7 @@ class ShiftController extends ApiController
         $user = $request->user();
         $employee = $user->employee;
 
-        if (!$employee) {
+        if (! $employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
         }
 
@@ -846,13 +922,12 @@ class ShiftController extends ApiController
             ->whereDate('date_end', '>=', $today)
             ->first();
 
-        if (!$shift) {
+        if (! $shift) {
             return $this->errorResponse('No shift found for today', 404);
         }
 
         return $this->successResponse($shift);
     }
-
 
     /**
      * @OA\Put(
@@ -862,27 +937,35 @@ class ShiftController extends ApiController
      *     operationId="updateClockShift",
      *     tags={"Shifts"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Parameter(
      *         name="id",
      *         in="path",
      *         description="Shift ID",
      *         required=true,
+     *
      *         @OA\Schema(type="integer")
      *     ),
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"lat", "lng", "type", "timezone"},
+     *
      *             @OA\Property(property="lat", type="number", format="float", example=19.4326),
      *             @OA\Property(property="lng", type="number", format="float", example=-99.1332),
      *             @OA\Property(property="type", type="string", enum={"clock_on", "clock_off"}, example="clock_on", description="Type of record: clock in or clock out"),
      *             @OA\Property(property="timezone", type="string", example="America/New_York", description="The timezone where the employee is located at clock time")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful registration",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Clock in successful"),
      *             @OA\Property(
@@ -902,6 +985,7 @@ class ShiftController extends ApiController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=404,
      *         description="Shift not found"
@@ -913,7 +997,9 @@ class ShiftController extends ApiController
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation error"),
      *             @OA\Property(
@@ -924,6 +1010,7 @@ class ShiftController extends ApiController
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated"
@@ -947,7 +1034,7 @@ class ShiftController extends ApiController
         $user = $request->user();
         $employee = $user->employee;
 
-        if (!$employee) {
+        if (! $employee) {
             return $this->errorResponse('Your user account is not linked to an employee profile.', 404);
         }
 
@@ -957,7 +1044,7 @@ class ShiftController extends ApiController
         }
 
         // Check if within the allowed radius
-        if (!$shift->isWithinRadius($request->lat, $request->lng)) {
+        if (! $shift->isWithinRadius($request->lat, $request->lng)) {
             return $this->errorResponse('You are outside the allowed radius for this location', 422);
         }
 
@@ -978,7 +1065,7 @@ class ShiftController extends ApiController
                     'state' => Shift::STATE_STARTED,
                 ]);
             } else {
-                if (!$shift->clock_on_time) {
+                if (! $shift->clock_on_time) {
                     return $this->errorResponse('Clock off cannot happen before clock on', 422);
                 }
 
@@ -993,21 +1080,21 @@ class ShiftController extends ApiController
             }
 
             DB::commit();
-            
+
             // Add the local time in the response to show the correct time in the user's timezone
             if ($request->type === 'clock_on' && $shift->clock_on_time) {
                 $shift->local_clock_on_time = $shift->getLocalClockOnTime()->toDateTimeString();
-            } else if ($request->type === 'clock_off' && $shift->clock_off_time) {
+            } elseif ($request->type === 'clock_off' && $shift->clock_off_time) {
                 $shift->local_clock_off_time = $shift->getLocalClockOffTime()->toDateTimeString();
             }
 
             return $this->successResponse($shift, $request->type === 'clock_on' ? 'Clock in successful' : 'Clock out successful');
         } catch (\Exception $e) {
             DB::rollBack();
-            return $this->errorResponse('Failed to update clock status: ' . $e->getMessage(), 500);
+
+            return $this->errorResponse('Failed to update clock status: '.$e->getMessage(), 500);
         }
     }
-
 
     /**
      * Generate profile text and color.
@@ -1016,9 +1103,10 @@ class ShiftController extends ApiController
     {
         $firstLetter1 = strtoupper(substr($var1, 0, 1));
         $firstLetter2 = strtoupper(substr($var2, 0, 1));
-        $textProfile = $firstLetter1 . $firstLetter2;
+        $textProfile = $firstLetter1.$firstLetter2;
         $textColor = $this->generateColorForTextProfile($textProfile);
         $backgroundColor = $this->generateBackgroundColorForTextProfile($textProfile);
+
         return [
             'text_profile' => $textProfile,
             'text_color' => $textColor,
@@ -1031,6 +1119,7 @@ class ShiftController extends ApiController
         $palettes = array_merge(...array_values($this->colorPalettes));
         $hashValue = crc32($textProfile);
         $index = $hashValue % count($palettes);
+
         return $palettes[$index];
     }
 
@@ -1038,6 +1127,7 @@ class ShiftController extends ApiController
     {
         $hashValue = crc32($textProfile);
         $index = $hashValue % count($this->backgroundColors);
+
         return $this->backgroundColors[$index];
     }
 }

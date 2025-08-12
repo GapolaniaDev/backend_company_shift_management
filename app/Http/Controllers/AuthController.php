@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Validator;
 use OpenApi\Annotations as OA;
@@ -27,10 +27,13 @@ class AuthController extends Controller
      *     description="Creates a new user in the system",
      *     operationId="registerUser",
      *     tags={"Authentication"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"name", "email", "password", "password_confirmation"},
+     *
      *             @OA\Property(property="name", type="string", example="John Smith", description="Full name of the user"),
      *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="Email address"),
      *             @OA\Property(property="password", type="string", format="password", example="password123", description="Password (minimum 8 characters)"),
@@ -38,17 +41,23 @@ class AuthController extends Controller
      *             @OA\Property(property="role", type="string", enum={"admin", "supervisor", "employee"}, example="employee", description="User role (optional)")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=201,
      *         description="User successfully registered",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="User successfully registered")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="email", type="array", @OA\Items(type="string", example="The email has already been taken")),
      *             @OA\Property(property="password", type="array", @OA\Items(type="string", example="The password must be at least 8 characters"))
      *         )
@@ -68,11 +77,24 @@ class AuthController extends Controller
             return response()->json($validator->errors(), 422);
         }
 
+        // Get the first available company or create a default one
+        $company = \DB::table('companies')->first();
+        if (!$company) {
+            $companyId = \DB::table('companies')->insertGetId([
+                'name' => 'Default Company',
+                'created_at' => now(),
+                'updated_at' => now()
+            ]);
+        } else {
+            $companyId = $company->id;
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,
             'password' => bcrypt($request->password),
             'role' => $request->role ?? 'employee',
+            'company_id' => $companyId,
         ]);
 
         return response()->json(['message' => 'User successfully registered'], 201);
@@ -85,19 +107,25 @@ class AuthController extends Controller
      *     description="Authenticates a user and returns an access token",
      *     operationId="loginUser",
      *     tags={"Authentication"},
+     *
      *     @OA\RequestBody(
      *         required=true,
+     *
      *         @OA\JsonContent(
      *             required={"email", "password"},
+     *
      *             @OA\Property(property="email", type="string", format="email", example="john@example.com", description="Email address"),
      *             @OA\Property(property="password", type="string", format="password", example="password123", description="Password"),
      *             @OA\Property(property="extended_token", type="boolean", example=false, description="Request a long-lived token (24h instead of 1h)")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successful login",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Login successful."),
      *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."),
@@ -112,18 +140,24 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Invalid credentials",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Invalid credentials. Please check your email and password.")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=422,
      *         description="Validation error",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Validation errors occurred."),
      *             @OA\Property(
@@ -153,7 +187,7 @@ class AuthController extends Controller
 
         $credentials = $request->only('email', 'password');
 
-        if (!Auth::attempt($credentials)) {
+        if (! Auth::attempt($credentials)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Invalid credentials. Please check your email and password.',
@@ -162,7 +196,7 @@ class AuthController extends Controller
 
         $user = Auth::user();
         $tokenExpiration = $request->input('extended_token', false) ? 1440 : 60; // 24h or 1h
-        $token = $user->createToken('Personal Access Token', ['*'], now()->addMinutes($tokenExpiration))->accessToken;
+        $token = $user->createToken('Personal Access Token', ['*'], now()->addMinutes($tokenExpiration))->plainTextToken;
 
         return response()->json([
             'success' => true,
@@ -186,17 +220,23 @@ class AuthController extends Controller
      *     operationId="logoutUser",
      *     tags={"Authentication"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Successfully logged out",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Successfully logged out")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     )
@@ -206,6 +246,7 @@ class AuthController extends Controller
     {
         $user = Auth::user();
         $user->token()->revoke();
+
         return response()->json(['message' => 'Successfully logged out']);
     }
 
@@ -217,10 +258,13 @@ class AuthController extends Controller
      *     operationId="getCurrentUser",
      *     tags={"Authentication"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\Response(
      *         response=200,
      *         description="User data",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="id", type="integer", example=1),
      *             @OA\Property(property="name", type="string", example="John Smith"),
      *             @OA\Property(property="email", type="string", example="john@example.com"),
@@ -237,10 +281,13 @@ class AuthController extends Controller
      *             )
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     )
@@ -278,25 +325,34 @@ class AuthController extends Controller
      *     operationId="refreshToken",
      *     tags={"Authentication"},
      *     security={{"bearerAuth":{}}},
+     *
      *     @OA\RequestBody(
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="extended_token", type="boolean", example=false, description="Request a long-lived token (24h instead of 1h)")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=200,
      *         description="Token refreshed",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(property="message", type="string", example="Token refreshed successfully."),
      *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJSUzI1NiJ9..."),
      *             @OA\Property(property="expires_in", type="integer", example=3600, description="Token expiration time in seconds")
      *         )
      *     ),
+     *
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
+     *
      *         @OA\JsonContent(
+     *
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     )

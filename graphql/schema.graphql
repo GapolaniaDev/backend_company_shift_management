@@ -1,0 +1,57 @@
+#import common/scalars.graphql
+#import common/enums.graphql
+#import common/inputs.graphql
+
+#import companies/types.graphql
+#import companies/queries.graphql
+#import companies/mutations.graphql
+
+#import users/types.graphql
+#import users/queries.graphql
+#import users/mutations.graphql
+
+#import employees/types.graphql
+#import employees/queries.graphql
+#import employees/mutations.graphql
+
+#import locations/types.graphql
+#import locations/queries.graphql
+#import locations/mutations.graphql
+
+#import shiftTypes/types.graphql
+#import shiftTypes/queries.graphql
+#import shiftTypes/mutations.graphql
+
+#import shiftTemplates/types.graphql
+#import shiftTemplates/queries.graphql
+#import shiftTemplates/mutations.graphql
+
+#import shifts/types.graphql
+#import shifts/queries.graphql
+#import shifts/mutations.graphql
+
+#import assignments/types.graphql
+#import assignments/queries.graphql
+#import assignments/mutations.graphql
+
+#import replacements/types.graphql
+#import replacements/queries.graphql
+#import replacements/mutations.graphql
+
+#import scheduleRuns/types.graphql
+#import scheduleRuns/queries.graphql
+#import scheduleRuns/mutations.graphql
+
+#import payPeriods/types.graphql
+#import payPeriods/queries.graphql
+#import payPeriods/mutations.graphql
+
+#import templateExceptions/types.graphql
+#import templateExceptions/queries.graphql
+#import templateExceptions/mutations.graphql
+
+directive @whereAuthCompany on FIELD_DEFINITION
+
+type Query
+
+type Mutation

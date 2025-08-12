@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(docker-compose:*)",
+      "Bash(composer:*)",
+      "Bash(php:*)",
+      "Bash(mkdir:*)",
+      "Bash(find:*)",
+      "Bash(touch:*)",
+      "Bash(vendor/bin/pint:*)",
+      "Bash(curl:*)",
+      "Bash(docker inspect:*)",
+      "Bash(git add:*)"
+    ],
+    "deny": []
+  }
+}
