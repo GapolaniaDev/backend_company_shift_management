@@ -16,7 +16,9 @@
       "WebFetch(domain:dimeo.com.au)",
       "WebFetch(domain:www.corporateclean.com.au)",
       "WebFetch(domain:hipages.com.au)",
-      "Bash(docker-compose:*)"
+      "Bash(docker-compose:*)",
+      "Bash(git pull:*)",
+      "Bash(git stash:*)"
     ],
     "deny": []
   }
