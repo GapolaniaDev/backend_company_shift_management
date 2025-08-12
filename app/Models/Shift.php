@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  *     schema="Shift",
  *     title="Shift",
  *     description="Work shift with schedule, employee assignment, and clock in/out data",
+ *
  *     @OA\Property(property="id", type="integer", format="int64", example=1, description="Unique identifier"),
  *     @OA\Property(property="shift_type_id", type="integer", example=2, description="Associated shift type ID"),
  *     @OA\Property(property="employee_id", type="integer", example=5, description="Assigned employee ID"),
@@ -72,7 +73,9 @@ class Shift extends Model
      * State constants for shifts
      */
     const STATE_NOT_STARTED = 0;
+
     const STATE_STARTED = 1;
+
     const STATE_FINISHED = 2;
 
     protected $fillable = [
@@ -108,24 +111,24 @@ class Shift extends Model
         'total_hours' => 'decimal:2',
         'state' => 'integer',
     ];
-    
+
     /**
      * Bootstrap any model events.
      */
     protected static function boot()
     {
         parent::boot();
-        
+
         // Auto-update state based on clock_on_time and clock_off_time
         static::saving(function ($shift) {
             // If clock_off_time is set, set state to FINISHED
             if ($shift->clock_off_time) {
                 $shift->state = self::STATE_FINISHED;
-            } 
+            }
             // If clock_on_time is set but clock_off_time is not, set state to STARTED
-            else if ($shift->clock_on_time) {
+            elseif ($shift->clock_on_time) {
                 $shift->state = self::STATE_STARTED;
-            } 
+            }
             // If neither is set, set state to NOT_STARTED
             else {
                 $shift->state = self::STATE_NOT_STARTED;
@@ -231,65 +234,106 @@ class Shift extends Model
 
         return $earthRadius * $c;
     }
-    
+
     /**
      * Get the clock-on time in the original timezone
-     * 
+     *
      * @return \Carbon\Carbon|null
      */
     public function getLocalClockOnTime()
     {
-        if (!$this->clock_on_time) {
+        if (! $this->clock_on_time) {
             return null;
         }
-        
+
         $timezone = $this->timezone_start ?: 'UTC';
+
         return $this->clock_on_time->copy()->setTimezone($timezone);
     }
-    
+
     /**
      * Get the clock-off time in the original timezone
-     * 
+     *
      * @return \Carbon\Carbon|null
      */
     public function getLocalClockOffTime()
     {
-        if (!$this->clock_off_time) {
+        if (! $this->clock_off_time) {
             return null;
         }
-        
+
         $timezone = $this->timezone_end ?: 'UTC';
+
         return $this->clock_off_time->copy()->setTimezone($timezone);
     }
-    
+
     /**
      * Get the shift start time in the saved timezone
-     * 
+     *
      * @return \Carbon\Carbon|null
      */
     public function getLocalStartTime()
     {
-        if (!$this->date_start) {
+        if (! $this->date_start) {
             return null;
         }
-        
+
         $timezone = $this->date_start_timezone ?: 'UTC';
+
         return $this->date_start->copy()->setTimezone($timezone);
     }
-    
+
     /**
      * Get the shift end time in the saved timezone
-     * 
+     *
      * @return \Carbon\Carbon|null
      */
     public function getLocalEndTime()
     {
-        if (!$this->date_end) {
+        if (! $this->date_end) {
             return null;
         }
-        
+
         $timezone = $this->date_end_timezone ?: 'UTC';
+
         return $this->date_end->copy()->setTimezone($timezone);
     }
 
+    /**
+     * Scope a query to filter shifts by various criteria
+     */
+    public function scopeFilterShifts($query, $filter)
+    {
+        if (! $filter) {
+            return $query;
+        }
+
+        // Filter by shift status
+        if (isset($filter['status'])) {
+            $query->where('shift_status', $filter['status']);
+        }
+
+        // Filter by date range
+        if (isset($filter['dateRange'])) {
+            $dateRange = $filter['dateRange'];
+            if (isset($dateRange['from'])) {
+                $query->where('date_start', '>=', $dateRange['from']);
+            }
+            if (isset($dateRange['to'])) {
+                $query->where('date_end', '<=', $dateRange['to']);
+            }
+        }
+
+        // Filter by employee
+        if (isset($filter['employeeId'])) {
+            $query->where('employee_id', $filter['employeeId']);
+        }
+
+        // Filter by shift type
+        if (isset($filter['shiftTypeId'])) {
+            $query->where('shift_type_id', $filter['shiftTypeId']);
+        }
+
+        return $query;
+    }
 }

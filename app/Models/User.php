@@ -6,13 +6,14 @@ use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
-use Laravel\Passport\HasApiTokens;
+use Laravel\Sanctum\HasApiTokens;
 
 /**
  * @OA\Schema(
  *     schema="User",
  *     title="User",
  *     description="User model representing system users with role-based access control",
+ *
  *     @OA\Property(property="id", type="integer", format="int64", example=1, description="Unique identifier"),
  *     @OA\Property(property="name", type="string", example="John Doe", description="Full name"),
  *     @OA\Property(property="email", type="string", format="email", example="john@example.com", description="Unique email address"),
@@ -57,7 +58,7 @@ class User extends Authenticatable
     protected $casts = [
         'email_verified_at' => 'datetime',
     ];
-    
+
     /**
      * Check if the user has a specific role
      */
@@ -65,7 +66,7 @@ class User extends Authenticatable
     {
         return $this->role === $role;
     }
-    
+
     /**
      * Check if the user is an admin
      */
@@ -73,7 +74,7 @@ class User extends Authenticatable
     {
         return $this->hasRole('admin');
     }
-    
+
     /**
      * Check if the user is a supervisor
      */
@@ -81,7 +82,7 @@ class User extends Authenticatable
     {
         return $this->hasRole('supervisor');
     }
-    
+
     /**
      * Check if the user is an employee
      */
@@ -89,7 +90,7 @@ class User extends Authenticatable
     {
         return $this->hasRole('employee');
     }
-    
+
     /**
      * Get the employee associated with the user
      */

@@ -1,0 +1,16 @@
+extend type Mutation {
+  createShift(input: ShiftUpsertInput! @spread): Shift
+    @guard(with: ["api"])
+    @can(ability: "create", model: "App\\Models\\Shift")
+    @field(resolver: "App\\GraphQL\\Mutations\\ShiftMutator@create")
+
+  updateShift(id: ID!, input: ShiftUpsertInput! @spread): Shift
+    @guard(with: ["api"])
+    @can(ability: "update", find: "id")
+    @field(resolver: "App\\GraphQL\\Mutations\\ShiftMutator@update")
+
+  deleteShift(id: ID!): Boolean
+    @guard(with: ["api"])
+    @can(ability: "delete", find: "id")
+    @field(resolver: "App\\GraphQL\\Mutations\\ShiftMutator@delete")
+}

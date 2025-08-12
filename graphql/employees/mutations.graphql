@@ -1,0 +1,16 @@
+extend type Mutation {
+  createEmployee(input: EmployeeUpsertInput! @spread): Employee
+    @guard(with: ["api"])
+    @can(ability: "create", model: "App\\Models\\Employee")
+    @field(resolver: "App\\GraphQL\\Mutations\\EmployeeMutator@create")
+
+  updateEmployee(id: ID!, input: EmployeeUpsertInput! @spread): Employee
+    @guard(with: ["api"])
+    @can(ability: "update", find: "id")
+    @field(resolver: "App\\GraphQL\\Mutations\\EmployeeMutator@update")
+
+  deleteEmployee(id: ID!): Boolean
+    @guard(with: ["api"])
+    @can(ability: "delete", find: "id")
+    @field(resolver: "App\\GraphQL\\Mutations\\EmployeeMutator@delete")
+}

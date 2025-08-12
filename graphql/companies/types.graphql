@@ -1,0 +1,35 @@
+type Company {
+  id: ID!
+  name: String!
+  description: String
+  address: String
+  phone: String
+  email: String
+  is_active: Boolean
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relations (can be added later with proper directives)
+  # users: [User!]! @hasMany
+  # employees: [Employee!]! @hasMany
+  # shifts: [Shift!]! @hasMany
+}
+
+input CompanyInput {
+  name: String!
+  description: String
+  address: String
+  phone: String
+  email: String
+  is_active: Boolean
+}
+
+input CompanyUpdateInput {
+  id: ID!
+  name: String
+  description: String
+  address: String
+  phone: String
+  email: String
+  is_active: Boolean
+}

@@ -11,6 +11,7 @@ use Illuminate\Database\Eloquent\Model;
  *     schema="PayPeriod",
  *     title="Pay Period",
  *     description="Pay period definition for payroll processing",
+ *
  *     @OA\Property(property="id", type="integer", format="int64", example=1, description="Unique identifier"),
  *     @OA\Property(property="start_date", type="string", format="date", example="2025-03-01", description="Start date of pay period"),
  *     @OA\Property(property="end_date", type="string", format="date", example="2025-03-15", description="End date of pay period"),

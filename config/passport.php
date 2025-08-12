@@ -26,12 +26,12 @@ return [
     |
     */
 
-    'private_key' => file_exists(storage_path('oauth-private.key'))
-        ? file_get_contents(storage_path('oauth-private.key'))
+    'private_key' => file_exists(storage_path('oauth/oauth-private.key'))
+        ? file_get_contents(storage_path('oauth/oauth-private.key'))
         : env('PASSPORT_PRIVATE_KEY'),
 
-    'public_key' => file_exists(storage_path('oauth-public.key'))
-        ? file_get_contents(storage_path('oauth-public.key'))
+    'public_key' => file_exists(storage_path('oauth/oauth-public.key'))
+        ? file_get_contents(storage_path('oauth/oauth-public.key'))
         : env('PASSPORT_PUBLIC_KEY'),
 
     /*
