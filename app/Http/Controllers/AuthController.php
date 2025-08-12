@@ -174,7 +174,7 @@ class AuthController extends Controller
 
         $user = Auth::user();
         $tokenExpiration = $request->input('extended_token', false) ? 1440 : 60; // 24h or 1h
-        $token = $user->createToken('Personal Access Token', ['*'], now()->addMinutes($tokenExpiration))->accessToken;
+        $token = $user->createToken('Personal Access Token', ['*'], now()->addMinutes($tokenExpiration))->plainTextToken;
 
         return response()->json([
             'success' => true,
@@ -216,8 +216,8 @@ class AuthController extends Controller
      */
     public function logout(Request $request)
     {
-        $user = Auth::user();
-        $user->token()->revoke();
+        $user = $request->user();
+        $user->currentAccessToken()->delete();
         return response()->json(['message' => 'Successfully logged out']);
     }
 
@@ -320,7 +320,7 @@ class AuthController extends Controller
         $user->tokens()->delete(); // Revoke all tokens
 
         $tokenExpiration = $request->input('extended_token', false) ? 1440 : 60; // 24h or 1h
-        $token = $user->createToken('Personal Access Token', ['*'], now()->addMinutes($tokenExpiration))->accessToken;
+        $token = $user->createToken('Personal Access Token', ['*'], now()->addMinutes($tokenExpiration))->plainTextToken;
 
         return response()->json([
             'success' => true,
