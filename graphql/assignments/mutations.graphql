@@ -1,0 +1,25 @@
+extend type Mutation {
+  createShiftAssignment(input: ShiftAssignmentInput! @spread): ShiftAssignment
+    @guard(with: ["api"])
+    @create(model: "App\\Models\\ShiftAssignment")
+
+  updateShiftAssignment(input: ShiftAssignmentUpdateInput! @spread): ShiftAssignment
+    @guard(with: ["api"])
+    @update(model: "App\\Models\\ShiftAssignment")
+
+  deleteShiftAssignment(id: ID!): ShiftAssignment
+    @guard(with: ["api"])
+    @delete(model: "App\\Models\\ShiftAssignment")
+
+  acceptShiftAssignment(id: ID!): ShiftAssignment
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Mutations\\ShiftAssignmentMutation@accept")
+
+  declineShiftAssignment(id: ID!): ShiftAssignment
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Mutations\\ShiftAssignmentMutation@decline")
+
+  completeShiftAssignment(id: ID!): ShiftAssignment
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Mutations\\ShiftAssignmentMutation@complete")
+}

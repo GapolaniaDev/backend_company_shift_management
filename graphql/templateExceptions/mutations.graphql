@@ -1,0 +1,13 @@
+extend type Mutation {
+  createTemplateException(input: TemplateExceptionInput! @spread): TemplateException
+    @guard(with: ["api"])
+    @create(model: "App\\Models\\TemplateException")
+
+  updateTemplateException(input: TemplateExceptionUpdateInput! @spread): TemplateException
+    @guard(with: ["api"])
+    @update(model: "App\\Models\\TemplateException")
+
+  deleteTemplateException(id: ID!): TemplateException
+    @guard(with: ["api"])
+    @delete(model: "App\\Models\\TemplateException")
+}

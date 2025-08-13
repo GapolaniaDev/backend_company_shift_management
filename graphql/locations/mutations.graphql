@@ -1,0 +1,16 @@
+extend type Mutation {
+  createLocation(input: LocationInput! @spread): Location
+    @guard(with: ["api"])
+    @create(model: "App\\Models\\Location")
+    @injectAuthCompany
+
+  updateLocation(input: LocationUpdateInput! @spread): Location
+    @guard(with: ["api"])
+    @update(model: "App\\Models\\Location")
+    @whereAuthCompany
+
+  deleteLocation(id: ID!): Location
+    @guard(with: ["api"])
+    @delete(model: "App\\Models\\Location")
+    @whereAuthCompany
+}

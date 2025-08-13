@@ -1,0 +1,59 @@
+type ShiftTemplate {
+  id: ID!
+  company_id: ID!
+  shift_type_id: ID!
+  location_id: ID
+  name: String!
+  description: String
+  rrule: String!
+  start_time: Time!
+  end_time: Time!
+  hours: Float!
+  capacity: Int!
+  auto_assign: Boolean!
+  effective_from: Date!
+  effective_to: Date
+  is_active: Boolean!
+  metadata: JSON
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relationships
+  company: Company! @belongsTo
+  shift_type: ShiftType! @belongsTo
+  location: Location @belongsTo
+  template_exceptions: [TemplateException!]! @hasMany
+}
+
+input ShiftTemplateInput {
+  shift_type_id: ID!
+  location_id: ID
+  name: String!
+  description: String
+  rrule: String!
+  start_time: Time!
+  end_time: Time!
+  capacity: Int = 1
+  auto_assign: Boolean = false
+  effective_from: Date!
+  effective_to: Date
+  is_active: Boolean = true
+  metadata: JSON
+}
+
+input ShiftTemplateUpdateInput {
+  id: ID!
+  shift_type_id: ID
+  location_id: ID
+  name: String
+  description: String
+  rrule: String
+  start_time: Time
+  end_time: Time
+  capacity: Int
+  auto_assign: Boolean
+  effective_from: Date
+  effective_to: Date
+  is_active: Boolean
+  metadata: JSON
+}

@@ -1,0 +1,16 @@
+extend type Query {
+  payPeriod(id: ID! @eq): PayPeriod
+    @guard(with: ["api"])
+    @find(model: "App\\Models\\PayPeriod")
+    @whereAuthCompany
+
+  payPeriods(
+    orderBy: [OrderByClause!] @orderBy
+    fiscal_week: Int @eq
+    start_date: Date @where(operator: ">=")
+    end_date: Date @where(operator: "<=")
+  ): [PayPeriod!]!
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\PayPeriod")
+    @whereAuthCompany
+}

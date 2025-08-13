@@ -1,0 +1,25 @@
+type PayPeriod {
+  id: ID!
+  company_id: ID!
+  start_date: Date!
+  end_date: Date!
+  fiscal_week: Int!
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relationships
+  company: Company! @belongsTo
+}
+
+input PayPeriodInput {
+  start_date: Date!
+  end_date: Date!
+  fiscal_week: Int!
+}
+
+input PayPeriodUpdateInput {
+  id: ID!
+  start_date: Date
+  end_date: Date
+  fiscal_week: Int
+}

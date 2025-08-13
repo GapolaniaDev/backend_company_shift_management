@@ -1,0 +1,15 @@
+extend type Query {
+  location(id: ID! @eq): Location
+    @guard(with: ["api"])
+    @find(model: "App\\Models\\Location")
+    @whereAuthCompany
+
+  locations(
+    orderBy: [OrderByClause!] @orderBy
+    name: String @where(operator: "like")
+    is_active: Boolean @eq
+  ): [Location!]!
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Location")
+    @whereAuthCompany
+}

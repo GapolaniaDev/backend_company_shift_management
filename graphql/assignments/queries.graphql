@@ -1,0 +1,15 @@
+extend type Query {
+  shiftAssignment(id: ID! @eq): ShiftAssignment
+    @guard(with: ["api"])
+    @find(model: "App\\Models\\ShiftAssignment")
+
+  shiftAssignments(
+    orderBy: [OrderByClause!] @orderBy
+    shift_id: ID @eq
+    employee_id: ID @eq
+    status: AssignmentStatus @eq
+    assignment_type: AssignmentType @eq
+  ): [ShiftAssignment!]!
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\ShiftAssignment")
+}

@@ -1,0 +1,28 @@
+extend type Query {
+  replacementRequest(id: ID! @eq): ReplacementRequest
+    @guard(with: ["api"])
+    @find(model: "App\\Models\\ReplacementRequest")
+
+  replacementRequests(
+    orderBy: [OrderByClause!] @orderBy
+    status: ReplacementRequestStatus @eq
+    urgency: ReplacementUrgency @eq
+    request_type: ReplacementRequestType @eq
+    requested_by: ID @eq
+  ): [ReplacementRequest!]!
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\ReplacementRequest")
+
+  replacementBid(id: ID! @eq): ReplacementBid
+    @guard(with: ["api"])
+    @find(model: "App\\Models\\ReplacementBid")
+
+  replacementBids(
+    orderBy: [OrderByClause!] @orderBy
+    replacement_request_id: ID @eq
+    employee_id: ID @eq
+    status: ReplacementBidStatus @eq
+  ): [ReplacementBid!]!
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\ReplacementBid")
+}
