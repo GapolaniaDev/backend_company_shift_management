@@ -4,8 +4,8 @@ scalar DateTime
 scalar Date
   @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Date")
 
-scalar Time
-  @scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Time")
+#scalar Time
+  #@scalar(class: "Nuwave\\Lighthouse\\Schema\\Types\\Scalars\\Time")
 
 scalar JSON
   @scalar(class: "App\\GraphQL\\Scalars\\JSON")
