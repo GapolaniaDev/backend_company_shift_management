@@ -11,10 +11,6 @@ type ShiftType {
   shifts: [Shift!]! @hasMany
 }
 
-type ShiftTypePaginator {
-  paginatorInfo: PaginatorInfo!
-  data: [ShiftType!]!
-}
 
 input ShiftTypeUpsertInput {
   name: String!

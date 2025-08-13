@@ -6,7 +6,7 @@ extend type Query {
 
   shiftTypes(
     orderBy: [OrderByClause!] @orderBy
-  ): ShiftTypePaginator
+  ): [ShiftType!]!
     @guard(with: ["api"])
     @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\ShiftType")
     @whereAuthCompany

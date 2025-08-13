@@ -6,7 +6,7 @@ extend type Query {
 
   employees(
     orderBy: [OrderByClause!] @orderBy
-  ): EmployeePaginator
+  ): [Employee!]!
     @guard(with: ["api"])
     @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Employee")
     @whereAuthCompany

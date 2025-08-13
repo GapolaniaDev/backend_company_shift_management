@@ -22,10 +22,6 @@ type Employee {
   shifts: [Shift!]! @hasMany
 }
 
-type EmployeePaginator {
-  paginatorInfo: PaginatorInfo!
-  data: [Employee!]!
-}
 
 input EmployeeUpsertInput {
   user_id: Int!
