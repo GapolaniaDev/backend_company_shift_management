@@ -10,16 +10,4 @@ extend type Mutation {
   deleteScheduleRun(id: ID!): ScheduleRun
     @guard(with: ["api"])
     @delete(model: "App\\Models\\ScheduleRun")
-
-  generateSchedule(id: ID!): ScheduleRun
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ScheduleRunMutation@generate")
-
-  publishSchedule(id: ID!): ScheduleRun
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ScheduleRunMutation@publish")
-
-  archiveSchedule(id: ID!): ScheduleRun
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ScheduleRunMutation@archive")
 }

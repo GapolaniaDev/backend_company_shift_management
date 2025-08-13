@@ -10,12 +10,4 @@ extend type Mutation {
   deleteShiftTemplate(id: ID!): ShiftTemplate
     @guard(with: ["api"])
     @delete(model: "App\\Models\\ShiftTemplate")
-
-  activateShiftTemplate(id: ID!): ShiftTemplate
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ShiftTemplateMutation@activate")
-
-  deactivateShiftTemplate(id: ID!): ShiftTemplate
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ShiftTemplateMutation@deactivate")
 }

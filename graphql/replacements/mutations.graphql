@@ -7,18 +7,6 @@ extend type Mutation {
     @guard(with: ["api"])
     @update(model: "App\\Models\\ReplacementRequest")
 
-  approveReplacementRequest(id: ID!): ReplacementRequest
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ReplacementRequestMutation@approve")
-
-  rejectReplacementRequest(id: ID!, review_notes: String): ReplacementRequest
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ReplacementRequestMutation@reject")
-
-  cancelReplacementRequest(id: ID!): ReplacementRequest
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ReplacementRequestMutation@cancel")
-
   createReplacementBid(input: ReplacementBidInput! @spread): ReplacementBid
     @guard(with: ["api"])
     @create(model: "App\\Models\\ReplacementBid")
@@ -26,16 +14,4 @@ extend type Mutation {
   updateReplacementBid(input: ReplacementBidUpdateInput! @spread): ReplacementBid
     @guard(with: ["api"])
     @update(model: "App\\Models\\ReplacementBid")
-
-  acceptReplacementBid(id: ID!): ReplacementBid
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ReplacementBidMutation@accept")
-
-  rejectReplacementBid(id: ID!): ReplacementBid
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ReplacementBidMutation@reject")
-
-  withdrawReplacementBid(id: ID!): ReplacementBid
-    @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Mutations\\ReplacementBidMutation@withdraw")
 }
