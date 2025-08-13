@@ -29,3 +29,4 @@ yarn-error.log
 *.p12
 *.pfx
 laravel-key.pem
+/graphql/schema.compiled.graphql

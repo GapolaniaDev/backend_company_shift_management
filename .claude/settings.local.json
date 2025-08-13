@@ -18,7 +18,8 @@
       "WebFetch(domain:hipages.com.au)",
       "Bash(docker-compose:*)",
       "Bash(git pull:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(grep:*)"
     ],
     "deny": []
   }
