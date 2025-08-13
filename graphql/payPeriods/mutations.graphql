@@ -1,0 +1,13 @@
+extend type Mutation {
+  createPayPeriod(input: PayPeriodInput! @spread): PayPeriod
+    @guard(with: ["api"])
+    @create(model: "App\\Models\\PayPeriod")
+
+  updatePayPeriod(input: PayPeriodUpdateInput! @spread): PayPeriod
+    @guard(with: ["api"])
+    @update(model: "App\\Models\\PayPeriod")
+
+  deletePayPeriod(id: ID!): PayPeriod
+    @guard(with: ["api"])
+    @delete(model: "App\\Models\\PayPeriod")
+}

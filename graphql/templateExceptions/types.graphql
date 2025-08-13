@@ -1,0 +1,49 @@
+type TemplateException {
+  id: ID!
+  shift_template_id: ID!
+  exception_date: Date!
+  exception_type: TemplateExceptionType!
+  start_time: Time
+  end_time: Time
+  hours: Float
+  capacity: Int
+  location_id: ID
+  reason: String
+  notes: String
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relationships
+  shift_template: ShiftTemplate! @belongsTo
+  location: Location @belongsTo
+}
+
+enum TemplateExceptionType {
+  CANCEL @enum(value: "cancel")
+  MODIFY @enum(value: "modify")
+  ADD @enum(value: "add")
+}
+
+input TemplateExceptionInput {
+  shift_template_id: ID!
+  exception_date: Date!
+  exception_type: TemplateExceptionType!
+  start_time: Time
+  end_time: Time
+  capacity: Int
+  location_id: ID
+  reason: String
+  notes: String
+}
+
+input TemplateExceptionUpdateInput {
+  id: ID!
+  exception_date: Date
+  exception_type: TemplateExceptionType
+  start_time: Time
+  end_time: Time
+  capacity: Int
+  location_id: ID
+  reason: String
+  notes: String
+}

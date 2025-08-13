@@ -1,0 +1,44 @@
+type Location {
+  id: ID!
+  company_id: ID!
+  name: String!
+  description: String
+  address: String
+  latitude: Float
+  longitude: Float
+  radius: Int!
+  zoom: Int!
+  timezone: String!
+  is_active: Boolean!
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relationships
+  company: Company! @belongsTo
+  shift_templates: [ShiftTemplate!]! @hasMany
+}
+
+input LocationInput {
+  name: String!
+  description: String
+  address: String
+  latitude: Float
+  longitude: Float
+  radius: Int = 100
+  zoom: Int = 16
+  timezone: String = "UTC"
+  is_active: Boolean = true
+}
+
+input LocationUpdateInput {
+  id: ID!
+  name: String
+  description: String
+  address: String
+  latitude: Float
+  longitude: Float
+  radius: Int
+  zoom: Int
+  timezone: String
+  is_active: Boolean
+}

@@ -7,9 +7,9 @@ extend type Query {
   shifts(
     filter: ShiftFilterInput @spread
     orderBy: [OrderByClause!] @orderBy
-  ): ShiftPaginator
+    first: Int
+    page: Int
+  ): [Shift!]!
     @guard(with: ["api"])
     @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Shift")
-    @whereAuthCompany
-    @scope(name: "filterShifts", args: ["filter"])
 }

@@ -34,10 +34,6 @@ type Shift {
   replacement: Employee @belongsTo
 }
 
-type ShiftPaginator {
-  paginatorInfo: PaginatorInfo!
-  data: [Shift!]!
-}
 
 input ShiftUpsertInput {
   shift_type_id: Int!

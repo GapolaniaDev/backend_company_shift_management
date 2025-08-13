@@ -1,0 +1,56 @@
+type ShiftAssignment {
+  id: ID!
+  shift_id: ID!
+  employee_id: ID!
+  status: AssignmentStatus!
+  assignment_type: AssignmentType!
+  priority: Int!
+  replaced_by_assignment_id: ID
+  replaces_assignment_id: ID
+  assigned_at: DateTime!
+  responded_at: DateTime
+  completed_at: DateTime
+  notes: String
+  metadata: JSON
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relationships
+  shift: Shift! @belongsTo
+  employee: Employee! @belongsTo
+  replaced_by_assignment: ShiftAssignment @belongsTo(relation: "replacedByAssignment")
+  replaces_assignment: ShiftAssignment @belongsTo(relation: "replacesAssignment")
+}
+
+enum AssignmentStatus {
+  ASSIGNED @enum(value: "assigned")
+  ACCEPTED @enum(value: "accepted")
+  DECLINED @enum(value: "declined")
+  COMPLETED @enum(value: "completed")
+  NO_SHOW @enum(value: "no_show")
+}
+
+enum AssignmentType {
+  PRIMARY @enum(value: "primary")
+  BACKUP @enum(value: "backup")
+  REPLACEMENT @enum(value: "replacement")
+}
+
+input ShiftAssignmentInput {
+  shift_id: ID!
+  employee_id: ID!
+  assignment_type: AssignmentType = PRIMARY
+  priority: Int = 1
+  notes: String
+  metadata: JSON
+}
+
+input ShiftAssignmentUpdateInput {
+  id: ID!
+  status: AssignmentStatus
+  priority: Int
+  notes: String
+  metadata: JSON
+  responded_at: DateTime
+  completed_at: DateTime
+}

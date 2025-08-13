@@ -67,13 +67,17 @@ class UserSeeder extends Seeder
         ];
 
         foreach ($employees as $employee) {
-            User::create([
-                'name' => $employee['name'],
-                'email' => $employee['email'],
-                'password' => bcrypt('123456789'),
-                'role' => $employee['role'],
-                'company_id' => $employee['company_id'],
-            ]);
+            User::firstOrCreate(
+                [
+                    'email' => $employee['email'],
+                    'company_id' => $employee['company_id']
+                ],
+                [
+                    'name' => $employee['name'],
+                    'password' => bcrypt('123456789'),
+                    'role' => $employee['role'],
+                ]
+            );
         }
 
         $this->command->info('✅ Users created and distributed across companies:');

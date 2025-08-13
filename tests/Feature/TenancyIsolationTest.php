@@ -116,14 +116,16 @@ class TenancyIsolationTest extends TestCase
             'company_id' => $this->companyA->id
         ]);
 
-        app()->instance('currentCompanyId', $this->companyA->id);
-
-        $shift = new Shift([
+        // Create and save the shift first
+        $shift = Shift::create([
             'shift_type_id' => $shiftTypeA->id,
             'employee_id' => $this->employeeA->id,
             'date_start' => now(),
             'date_end' => now()->addHours(8),
             'total_hours' => 8.0,
+            'weekday_code' => now()->dayOfWeek,
+            'shift_status' => 'published',
+            'state' => 0,
             'company_id' => $this->companyA->id
         ]);
 

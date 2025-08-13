@@ -1,0 +1,17 @@
+extend type Query {
+  shiftTemplate(id: ID! @eq): ShiftTemplate
+    @guard(with: ["api"])
+    @find(model: "App\\Models\\ShiftTemplate")
+
+  shiftTemplates(
+    orderBy: [OrderByClause!] @orderBy
+    shift_type_id: ID @eq
+    location_id: ID @eq
+    is_active: Boolean @eq
+    name: String @where(operator: "like")
+    effective_from: Date @where(operator: ">=")
+    effective_to: Date @where(operator: "<=")
+  ): [ShiftTemplate!]!
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\ShiftTemplate")
+}

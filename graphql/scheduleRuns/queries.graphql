@@ -1,0 +1,14 @@
+extend type Query {
+  scheduleRun(id: ID! @eq): ScheduleRun
+    @guard(with: ["api"])
+    @find(model: "App\\Models\\ScheduleRun")
+
+  scheduleRuns(
+    orderBy: [OrderByClause!] @orderBy
+    status: ScheduleRunStatus @eq
+    period_start: Date @where(operator: ">=")
+    period_end: Date @where(operator: "<=")
+  ): [ScheduleRun!]!
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\ScheduleRun")
+}

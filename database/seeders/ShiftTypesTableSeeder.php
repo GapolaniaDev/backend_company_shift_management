@@ -102,15 +102,23 @@ class ShiftTypesTableSeeder extends Seeder
         ];
 
         foreach ($shiftTypes as $shiftType) {
-            DB::table('shift_types')->insert([
-                'name' => $shiftType['name'],
-                'description' => $shiftType['description'],
-                'weekly_hours' => $shiftType['weekly_hours'],
-                'schedule' => $shiftType['schedule'],
-                'company_id' => $shiftType['company_id'],
-                'created_at' => now(),
-                'updated_at' => now(),
-            ]);
+            // Check if shift type already exists for this company
+            $existingShiftType = DB::table('shift_types')
+                ->where('name', $shiftType['name'])
+                ->where('company_id', $shiftType['company_id'])
+                ->first();
+
+            if (!$existingShiftType) {
+                DB::table('shift_types')->insert([
+                    'name' => $shiftType['name'],
+                    'description' => $shiftType['description'],
+                    'weekly_hours' => $shiftType['weekly_hours'],
+                    'schedule' => $shiftType['schedule'],
+                    'company_id' => $shiftType['company_id'],
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
         }
 
         $this->command->info('✅ Shift types created and distributed across companies');

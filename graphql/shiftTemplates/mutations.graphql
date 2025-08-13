@@ -1,0 +1,21 @@
+extend type Mutation {
+  createShiftTemplate(input: ShiftTemplateInput! @spread): ShiftTemplate
+    @guard(with: ["api"])
+    @create(model: "App\\Models\\ShiftTemplate")
+
+  updateShiftTemplate(input: ShiftTemplateUpdateInput! @spread): ShiftTemplate
+    @guard(with: ["api"])
+    @update(model: "App\\Models\\ShiftTemplate")
+
+  deleteShiftTemplate(id: ID!): ShiftTemplate
+    @guard(with: ["api"])
+    @delete(model: "App\\Models\\ShiftTemplate")
+
+  activateShiftTemplate(id: ID!): ShiftTemplate
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Mutations\\ShiftTemplateMutation@activate")
+
+  deactivateShiftTemplate(id: ID!): ShiftTemplate
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Mutations\\ShiftTemplateMutation@deactivate")
+}

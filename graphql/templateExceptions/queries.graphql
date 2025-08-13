@@ -1,0 +1,14 @@
+extend type Query {
+  templateException(id: ID! @eq): TemplateException
+    @guard(with: ["api"])
+    @find(model: "App\\Models\\TemplateException")
+
+  templateExceptions(
+    orderBy: [OrderByClause!] @orderBy
+    shift_template_id: ID @eq
+    exception_date: Date @eq
+    exception_type: TemplateExceptionType @eq
+  ): [TemplateException!]!
+    @guard(with: ["api"])
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\TemplateException")
+}

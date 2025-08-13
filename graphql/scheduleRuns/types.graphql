@@ -1,0 +1,45 @@
+type ScheduleRun {
+  id: ID!
+  company_id: ID!
+  period_start: Date!
+  period_end: Date!
+  period_name: String
+  status: ScheduleRunStatus!
+  generated_at: DateTime
+  published_at: DateTime
+  generated_by: ID
+  published_by: ID
+  generation_summary: JSON
+  notes: String
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relationships
+  company: Company! @belongsTo
+  generated_by_user: User @belongsTo(relation: "generatedByUser")
+  published_by_user: User @belongsTo(relation: "publishedByUser")
+}
+
+enum ScheduleRunStatus {
+  DRAFT @enum(value: "draft")
+  REVIEW @enum(value: "review")
+  PUBLISHED @enum(value: "published")
+  ARCHIVED @enum(value: "archived")
+}
+
+input ScheduleRunInput {
+  period_start: Date!
+  period_end: Date!
+  period_name: String
+  notes: String
+}
+
+input ScheduleRunUpdateInput {
+  id: ID!
+  period_start: Date
+  period_end: Date
+  period_name: String
+  status: ScheduleRunStatus
+  notes: String
+  generation_summary: JSON
+}

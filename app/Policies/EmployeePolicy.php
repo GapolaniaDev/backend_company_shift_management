@@ -12,7 +12,7 @@ class EmployeePolicy
      */
     public function viewAny(User $user): bool
     {
-        //
+        return true;
     }
 
     /**
@@ -20,7 +20,8 @@ class EmployeePolicy
      */
     public function view(User $user, Employee $employee): bool
     {
-        //
+        // Users can view employees in their company
+        return $user->company_id === $employee->company_id;
     }
 
     /**

@@ -1,0 +1,95 @@
+type ReplacementRequest {
+  id: ID!
+  shift_assignment_id: ID!
+  requested_by: ID!
+  request_type: ReplacementRequestType!
+  status: ReplacementRequestStatus!
+  urgency: ReplacementUrgency!
+  reason: String!
+  needed_by: DateTime
+  requested_at: DateTime!
+  reviewed_by: ID
+  reviewed_at: DateTime
+  review_notes: String
+  fulfilled_by_assignment_id: ID
+  fulfilled_at: DateTime
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relationships
+  shift_assignment: ShiftAssignment! @belongsTo
+  requested_by_employee: Employee! @belongsTo(relation: "requestedByEmployee")
+  reviewed_by_employee: Employee @belongsTo(relation: "reviewedByEmployee")
+  fulfilled_by_assignment: ShiftAssignment @belongsTo(relation: "fulfilledByAssignment")
+}
+
+type ReplacementBid {
+  id: ID!
+  replacement_request_id: ID!
+  employee_id: ID!
+  status: ReplacementBidStatus!
+  bid_amount: Float
+  notes: String
+  bid_at: DateTime!
+  responded_at: DateTime
+  created_at: DateTime!
+  updated_at: DateTime!
+  
+  # Relationships
+  replacement_request: ReplacementRequest! @belongsTo
+  employee: Employee! @belongsTo
+}
+
+enum ReplacementRequestType {
+  FIND_REPLACEMENT @enum(value: "find_replacement")
+  CALL_OUT @enum(value: "call_out")
+  SWAP_REQUEST @enum(value: "swap_request")
+}
+
+enum ReplacementRequestStatus {
+  PENDING @enum(value: "pending")
+  APPROVED @enum(value: "approved")
+  REJECTED @enum(value: "rejected")
+  FULFILLED @enum(value: "fulfilled")
+  CANCELLED @enum(value: "cancelled")
+}
+
+enum ReplacementUrgency {
+  LOW @enum(value: "low")
+  MEDIUM @enum(value: "medium")
+  HIGH @enum(value: "high")
+  EMERGENCY @enum(value: "emergency")
+}
+
+enum ReplacementBidStatus {
+  PENDING @enum(value: "pending")
+  ACCEPTED @enum(value: "accepted")
+  REJECTED @enum(value: "rejected")
+  WITHDRAWN @enum(value: "withdrawn")
+}
+
+input ReplacementRequestInput {
+  shift_assignment_id: ID!
+  request_type: ReplacementRequestType = FIND_REPLACEMENT
+  urgency: ReplacementUrgency = MEDIUM
+  reason: String!
+  needed_by: DateTime
+}
+
+input ReplacementRequestUpdateInput {
+  id: ID!
+  status: ReplacementRequestStatus
+  review_notes: String
+}
+
+input ReplacementBidInput {
+  replacement_request_id: ID!
+  bid_amount: Float
+  notes: String
+}
+
+input ReplacementBidUpdateInput {
+  id: ID!
+  status: ReplacementBidStatus
+  notes: String
+}

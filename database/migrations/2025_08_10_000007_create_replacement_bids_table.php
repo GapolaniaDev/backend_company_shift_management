@@ -34,7 +34,7 @@ return new class extends Migration
 
             $table->index(['replacement_request_id', 'bid_status']);
             $table->index(['bidder_employee_id', 'bid_status']);
-            $table->unique(['replacement_request_id', 'bidder_employee_id']);
+            $table->unique(['replacement_request_id', 'bidder_employee_id'], 'replacement_bids_request_employee_unique');
         });
     }
 

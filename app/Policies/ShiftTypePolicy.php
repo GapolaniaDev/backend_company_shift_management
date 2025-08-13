@@ -12,7 +12,7 @@ class ShiftTypePolicy
      */
     public function viewAny(User $user): bool
     {
-        //
+        return true;
     }
 
     /**
@@ -20,7 +20,8 @@ class ShiftTypePolicy
      */
     public function view(User $user, ShiftType $shiftType): bool
     {
-        //
+        // Users can view shift types in their company
+        return $user->company_id === $shiftType->company_id;
     }
 
     /**

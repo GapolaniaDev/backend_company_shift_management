@@ -1,11 +1,7 @@
 type Company {
   id: ID!
   name: String!
-  description: String
-  address: String
-  phone: String
-  email: String
-  is_active: Boolean
+  slug: String!
   created_at: DateTime!
   updated_at: DateTime!
   
@@ -17,19 +13,11 @@ type Company {
 
 input CompanyInput {
   name: String!
-  description: String
-  address: String
-  phone: String
-  email: String
-  is_active: Boolean
+  slug: String!
 }
 
 input CompanyUpdateInput {
   id: ID!
   name: String
-  description: String
-  address: String
-  phone: String
-  email: String
-  is_active: Boolean
+  slug: String
 }
