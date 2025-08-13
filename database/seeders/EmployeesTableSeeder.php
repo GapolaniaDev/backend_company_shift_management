@@ -7,6 +7,7 @@ use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use App\Models\Company;
+use App\Models\User;
 
 class EmployeesTableSeeder extends Seeder
 {
@@ -70,16 +71,34 @@ class EmployeesTableSeeder extends Seeder
             ['name' => 'Daniel Anderson', 'email' => 'daniel.anderson@biogreen.com', 'company_id' => $bioGreenCompany->id]
         ];
         
-        $userIdCounter = 1;
-        $supervisorCode = 1;
         foreach ($employees as $employee) {
+            // Get the user ID based on email and company
+            $user = User::where('email', $employee['email'])
+                       ->where('company_id', $employee['company_id'])
+                       ->first();
+            
+            if (!$user) {
+                $this->command->warn("⚠️ User not found for email: {$employee['email']} in company {$employee['company_id']}");
+                continue;
+            }
+            
+            // Check if employee already exists
+            $existingEmployee = DB::table('employees')
+                               ->where('user_id', $user->id)
+                               ->where('company_id', $employee['company_id'])
+                               ->first();
+            
+            if ($existingEmployee) {
+                continue; // Skip if already exists
+            }
+            
             $names = explode(' ', $employee['name']);
             $firstName = array_shift($names);
             $lastName = implode(' ', $names);
 
             DB::table('employees')->insert([
-                'user_id' => $userIdCounter,
-                'supervisor_id' => $supervisorCode,
+                'user_id' => $user->id,
+                'supervisor_id' => null, // Set to null to avoid foreign key constraint issues
                 'first_name' => $firstName,
                 'last_name' => $lastName,
                 'email' => $employee['email'],
@@ -89,7 +108,6 @@ class EmployeesTableSeeder extends Seeder
                 'created_at' => now(),
                 'updated_at' => now(),
             ]);
-            $userIdCounter++;
         }
 
         $this->command->info('✅ Employees created and distributed across companies:');

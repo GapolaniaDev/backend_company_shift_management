@@ -14,28 +14,34 @@ class CompaniesSeeder extends Seeder
     public function run(): void
     {
         // Create Dimeo company
-        Company::create([
-            'name' => 'Dimeo',
-            'slug' => 'dimeo',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        Company::firstOrCreate(
+            ['slug' => 'dimeo'],
+            [
+                'name' => 'Dimeo',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
 
         // Create Corporate Clean Property Services company
-        Company::create([
-            'name' => 'Corporate Clean Property Services',
-            'slug' => 'corporate-clean',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        Company::firstOrCreate(
+            ['slug' => 'corporate-clean'],
+            [
+                'name' => 'Corporate Clean Property Services',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
 
         // Create Bio Green Family company (placeholder since we couldn't get specific info)
-        Company::create([
-            'name' => 'Bio Green Family Pty Ltd',
-            'slug' => 'bio-green-family',
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
+        Company::firstOrCreate(
+            ['slug' => 'bio-green-family'],
+            [
+                'name' => 'Bio Green Family Pty Ltd',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
 
         $this->command->info('✅ Companies created successfully:');
         $this->command->info('   - Dimeo (slug: dimeo)');
