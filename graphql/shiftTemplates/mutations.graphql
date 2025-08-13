@@ -2,17 +2,14 @@ extend type Mutation {
   createShiftTemplate(input: ShiftTemplateInput! @spread): ShiftTemplate
     @guard(with: ["api"])
     @create(model: "App\\Models\\ShiftTemplate")
-    @injectAuthCompany
 
   updateShiftTemplate(input: ShiftTemplateUpdateInput! @spread): ShiftTemplate
     @guard(with: ["api"])
     @update(model: "App\\Models\\ShiftTemplate")
-    @whereAuthCompany
 
   deleteShiftTemplate(id: ID!): ShiftTemplate
     @guard(with: ["api"])
     @delete(model: "App\\Models\\ShiftTemplate")
-    @whereAuthCompany
 
   activateShiftTemplate(id: ID!): ShiftTemplate
     @guard(with: ["api"])

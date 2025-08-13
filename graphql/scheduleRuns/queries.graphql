@@ -2,7 +2,6 @@ extend type Query {
   scheduleRun(id: ID! @eq): ScheduleRun
     @guard(with: ["api"])
     @find(model: "App\\Models\\ScheduleRun")
-    @whereAuthCompany
 
   scheduleRuns(
     orderBy: [OrderByClause!] @orderBy
@@ -12,5 +11,4 @@ extend type Query {
   ): [ScheduleRun!]!
     @guard(with: ["api"])
     @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\ScheduleRun")
-    @whereAuthCompany
 }

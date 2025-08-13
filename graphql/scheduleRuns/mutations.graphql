@@ -2,17 +2,14 @@ extend type Mutation {
   createScheduleRun(input: ScheduleRunInput! @spread): ScheduleRun
     @guard(with: ["api"])
     @create(model: "App\\Models\\ScheduleRun")
-    @injectAuthCompany
 
   updateScheduleRun(input: ScheduleRunUpdateInput! @spread): ScheduleRun
     @guard(with: ["api"])
     @update(model: "App\\Models\\ScheduleRun")
-    @whereAuthCompany
 
   deleteScheduleRun(id: ID!): ScheduleRun
     @guard(with: ["api"])
     @delete(model: "App\\Models\\ScheduleRun")
-    @whereAuthCompany
 
   generateSchedule(id: ID!): ScheduleRun
     @guard(with: ["api"])

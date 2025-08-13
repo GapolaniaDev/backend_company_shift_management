@@ -107,6 +107,7 @@ class QueriesTest extends TestCase
             'status' => 'assigned',
             'assignment_type' => 'primary',
             'priority' => 1,
+            'assigned_at' => now(),
         ]);
 
         $this->scheduleRun = ScheduleRun::create([

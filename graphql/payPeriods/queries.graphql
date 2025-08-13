@@ -2,7 +2,6 @@ extend type Query {
   payPeriod(id: ID! @eq): PayPeriod
     @guard(with: ["api"])
     @find(model: "App\\Models\\PayPeriod")
-    @whereAuthCompany
 
   payPeriods(
     orderBy: [OrderByClause!] @orderBy
@@ -12,5 +11,4 @@ extend type Query {
   ): [PayPeriod!]!
     @guard(with: ["api"])
     @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\PayPeriod")
-    @whereAuthCompany
 }

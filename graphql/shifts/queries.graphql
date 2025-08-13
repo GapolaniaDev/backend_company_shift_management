@@ -12,5 +12,4 @@ extend type Query {
   ): [Shift!]!
     @guard(with: ["api"])
     @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Shift")
-    @whereAuthCompany
 }

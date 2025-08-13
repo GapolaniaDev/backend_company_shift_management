@@ -2,7 +2,6 @@ extend type Query {
   shiftTemplate(id: ID! @eq): ShiftTemplate
     @guard(with: ["api"])
     @find(model: "App\\Models\\ShiftTemplate")
-    @whereAuthCompany
 
   shiftTemplates(
     orderBy: [OrderByClause!] @orderBy
@@ -15,5 +14,4 @@ extend type Query {
   ): [ShiftTemplate!]!
     @guard(with: ["api"])
     @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\ShiftTemplate")
-    @whereAuthCompany
 }

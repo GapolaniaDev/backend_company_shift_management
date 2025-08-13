@@ -2,7 +2,6 @@ extend type Query {
   location(id: ID! @eq): Location
     @guard(with: ["api"])
     @find(model: "App\\Models\\Location")
-    @whereAuthCompany
 
   locations(
     orderBy: [OrderByClause!] @orderBy
@@ -11,5 +10,4 @@ extend type Query {
   ): [Location!]!
     @guard(with: ["api"])
     @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Location")
-    @whereAuthCompany
 }
