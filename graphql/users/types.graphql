@@ -17,3 +17,29 @@ input UserUpsertInput {
   password: String
   role: UserRole!
 }
+
+# Profile specific input types
+input ProfileUpdateInput {
+  name: String
+  email: String
+}
+
+input ProfileCreateInput {
+  name: String!
+  email: String!
+  password: String!
+  role: UserRole! = EMPLOYEE
+}
+
+input ChangePasswordInput {
+  current_password: String!
+  new_password: String!
+  new_password_confirmation: String!
+}
+
+# Profile response type with additional metadata
+type ProfileResponse {
+  user: User!
+  message: String
+  updated_fields: [String!]
+}

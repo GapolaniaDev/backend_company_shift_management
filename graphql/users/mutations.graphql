@@ -3,4 +3,21 @@ extend type Mutation {
     @guard(with: ["api"])
     @can(ability: "update", find: "id")
     @update
+    
+  # Profile specific mutations
+  updateProfile(input: ProfileUpdateInput! @spread): User
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Mutations\\ProfileMutator@update")
+    
+  changePassword(input: ChangePasswordInput! @spread): Boolean
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Mutations\\ProfileMutator@changePassword")
+    
+  deleteProfile: Boolean
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Mutations\\ProfileMutator@delete")
+    
+  createProfile(input: ProfileCreateInput! @spread): User
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Mutations\\ProfileMutator@create")
 }
