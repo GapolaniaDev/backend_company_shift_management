@@ -7,7 +7,10 @@ extend type Query {
     orderBy: [OrderByClause!] @orderBy
     name: String @where(operator: "like")
     is_active: Boolean @eq
-  ): [Location!]!
+    ids: [ID!]
+    first: Int! = 25
+    page: Int
+  ): LocationPaginator!
     @guard(with: ["api"])
-    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Location")
+    @field(resolver: "App\\GraphQL\\Resolvers\\LocationResolver@locations")
 }

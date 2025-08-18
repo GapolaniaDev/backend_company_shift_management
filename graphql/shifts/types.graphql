@@ -2,6 +2,7 @@ type Shift {
   id: ID!
   shift_type_id: Int!
   employee_id: Int
+  location_id: ID
   date_start: DateTime!
   date_end: DateTime!
   date_start_timezone: String
@@ -32,6 +33,7 @@ type Shift {
   shiftType: ShiftType @belongsTo
   employee: Employee @belongsTo
   replacement: Employee @belongsTo
+  locationDetails: Location @belongsTo(relation: "location")
 }
 
 
@@ -58,4 +60,7 @@ input ShiftFilterInput {
   dateRange: DateRange
   employeeId: Int
   shiftTypeId: Int
+  employeeIds: [Int!]
+  shiftTypeIds: [Int!]
+  locationIds: [ID!]
 }

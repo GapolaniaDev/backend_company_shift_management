@@ -81,6 +81,7 @@ class Shift extends Model
     protected $fillable = [
         'shift_type_id',
         'employee_id',
+        'location_id',
         'date_start',
         'date_end',
         'date_start_timezone',
@@ -372,14 +373,29 @@ class Shift extends Model
             }
         }
 
-        // Filter by employee
+        // Filter by single employee (backward compatibility)
         if (isset($filter['employeeId'])) {
             $query->where('employee_id', $filter['employeeId']);
         }
 
-        // Filter by shift type
+        // Filter by multiple employees
+        if (isset($filter['employeeIds']) && is_array($filter['employeeIds']) && count($filter['employeeIds'])) {
+            $query->whereIn('employee_id', $filter['employeeIds']);
+        }
+
+        // Filter by single shift type (backward compatibility)
         if (isset($filter['shiftTypeId'])) {
             $query->where('shift_type_id', $filter['shiftTypeId']);
+        }
+
+        // Filter by multiple shift types
+        if (isset($filter['shiftTypeIds']) && is_array($filter['shiftTypeIds']) && count($filter['shiftTypeIds'])) {
+            $query->whereIn('shift_type_id', $filter['shiftTypeIds']);
+        }
+
+        // Filter by multiple locations
+        if (isset($filter['locationIds']) && is_array($filter['locationIds']) && count($filter['locationIds'])) {
+            $query->whereIn('location_id', $filter['locationIds']);
         }
 
         return $query;

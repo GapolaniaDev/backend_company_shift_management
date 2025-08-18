@@ -1,0 +1,48 @@
+query LocationsWithEmployees(
+  $locationIds: [ID!]
+  $shiftTypeIds: [ID!]
+  $employeeIds: [ID!]
+  $from: DateTime!
+  $to: DateTime!
+  $first: Int = 25
+  $page: Int = 1
+) {
+  locations(ids: $locationIds, first: $first, page: $page) {
+    paginatorInfo { 
+      total 
+      currentPage 
+      hasMorePages 
+    }
+    data {
+      id
+      name
+      address
+      employees(
+        employee_ids: $employeeIds
+        shift_type_ids: $shiftTypeIds
+        start_date: $from
+        end_date: $to
+      ) {
+        id
+        first_name
+        last_name
+        email
+        shifts(
+          filter: {
+            dateRange: { from: $from, to: $to }
+            employeeIds: $employeeIds
+            shiftTypeIds: $shiftTypeIds
+            locationIds: $locationIds
+          }
+        ) {
+          id
+          shift_type_id
+          date_start
+          date_end
+          shiftType { id name }
+          locationDetails { id name }
+        }
+      }
+    }
+  }
+}
