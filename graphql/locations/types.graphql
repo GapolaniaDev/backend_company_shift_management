@@ -48,8 +48,3 @@ input LocationUpdateInput {
   timezone: String
   is_active: Boolean
 }
-
-type LocationPaginator {
-  paginatorInfo: PaginatorInfo!
-  data: [Location!]!
-}

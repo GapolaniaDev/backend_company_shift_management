@@ -1,0 +1,14 @@
+query MyQuery {
+  locations(is_active: true, first: 5) {
+    paginatorInfo {
+      total
+      currentPage
+      hasMorePages
+    }
+    data {
+      id
+      name
+      address
+    }
+  }
+}

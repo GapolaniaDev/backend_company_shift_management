@@ -3,45 +3,9 @@
 namespace App\GraphQL\Resolvers;
 
 use App\Models\Employee;
-use App\Models\Location;
-use Illuminate\Database\Eloquent\Builder;
 
 class LocationResolver
 {
-    /**
-     * Resolver for Query.locations with optional ids filter and pagination
-     */
-    public function locations($_, array $args)
-    {
-        $query = Location::query();
-
-        // Apply filters
-        if (isset($args['ids']) && is_array($args['ids']) && count($args['ids'])) {
-            $query->whereIn('id', $args['ids']);
-        }
-        
-        if (isset($args['name'])) {
-            $query->where('name', 'like', '%' . $args['name'] . '%');
-        }
-        
-        if (isset($args['is_active'])) {
-            $query->where('is_active', (bool) $args['is_active']);
-        }
-
-        // Apply ordering
-        if (isset($args['orderBy']) && is_array($args['orderBy'])) {
-            foreach ($args['orderBy'] as $orderBy) {
-                $query->orderBy($orderBy['column'], $orderBy['order']);
-            }
-        }
-
-        // Paginate results
-        $first = $args['first'] ?? 25;
-        $page = $args['page'] ?? 1;
-
-        return $query->paginate($first, ['*'], 'page', $page);
-    }
-
     /**
      * Resolver for Location.employees with filtering by shifts
      */

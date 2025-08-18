@@ -5,12 +5,12 @@ extend type Query {
 
   locations(
     orderBy: [OrderByClause!] @orderBy
-    name: String @where(operator: "like")
+    name: String @scope(name: "whereName")
     is_active: Boolean @eq
-    ids: [ID!]
+    ids: [ID!] @scope(name: "whereIds")
     first: Int! = 25
     page: Int
-  ): LocationPaginator!
+  ): [Location!]!
     @guard(with: ["api"])
-    @field(resolver: "App\\GraphQL\\Resolvers\\LocationResolver@locations")
+    @paginate(defaultCount: 25, type: PAGINATOR, model: "App\\Models\\Location")
 }

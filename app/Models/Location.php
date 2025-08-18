@@ -133,4 +133,54 @@ class Location extends Model
             'lng' => (float) $this->longitude,
         ];
     }
+
+    /**
+     * Scope to filter locations by multiple IDs
+     */
+    public function scopeWhereIds($query, $ids)
+    {
+        // Handle various input formats
+        if (!$ids) {
+            return $query;
+        }
+        
+        // If it's a string, try to handle it gracefully
+        if (is_string($ids)) {
+            $ids = trim($ids);
+            if ($ids === '') {
+                return $query;
+            }
+            // If it's a comma-separated string, convert to array
+            if (strpos($ids, ',') !== false) {
+                $ids = array_map('trim', explode(',', $ids));
+            } else {
+                $ids = [$ids];
+            }
+        }
+        
+        if (is_array($ids) && count($ids) > 0) {
+            // Filter out empty values
+            $ids = array_filter($ids, function($id) {
+                return $id !== null && $id !== '';
+            });
+            
+            if (count($ids) > 0) {
+                return $query->whereIn('id', $ids);
+            }
+        }
+        
+        return $query;
+    }
+
+    /**
+     * Scope to filter locations by name (handles empty strings)
+     */
+    public function scopeWhereName($query, $name)
+    {
+        if ($name && trim($name) !== '') {
+            return $query->where('name', 'like', '%' . $name . '%');
+        }
+        
+        return $query;
+    }
 }
