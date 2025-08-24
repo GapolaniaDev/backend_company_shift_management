@@ -1495,7 +1495,7 @@
                                         },
                                         "message": {
                                             "type": "string",
-                                            "example": "No query results for model [App\\\\Models\\\\Employee] 1"
+                                            "example": "Employee not found."
                                         }
                                     },
                                     "type": "object"
@@ -1524,21 +1524,38 @@
                         }
                     },
                     "403": {
-                        "description": "Forbidden - Insufficient permissions or trying to access employee outside supervision",
+                        "description": "Forbidden - Different scenarios",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "success": {
-                                            "type": "boolean",
-                                            "example": false
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Unauthorized. You do not have permission to view this employee as they belong to a different company."
+                                                }
+                                            },
+                                            "type": "object"
                                         },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthorized. You can only view employees you supervise."
+                                        {
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Unauthorized. You can only view employees you supervise."
+                                                }
+                                            },
+                                            "type": "object"
                                         }
-                                    },
-                                    "type": "object"
+                                    ]
                                 }
                             }
                         }

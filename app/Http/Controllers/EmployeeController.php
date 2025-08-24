@@ -561,7 +561,7 @@ class EmployeeController extends ApiController
      *         description="Employee not found",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="No query results for model [App\\Models\\Employee] 1")
+     *             @OA\Property(property="message", type="string", example="Employee not found.")
      *         )
      *     ),
      *     @OA\Response(
@@ -574,10 +574,18 @@ class EmployeeController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Forbidden - Insufficient permissions or trying to access employee outside supervision",
+     *         description="Forbidden - Different scenarios",
      *         @OA\JsonContent(
-     *             @OA\Property(property="success", type="boolean", example=false),
-     *             @OA\Property(property="message", type="string", example="Unauthorized. You can only view employees you supervise.")
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     @OA\Property(property="success", type="boolean", example=false),
+     *                     @OA\Property(property="message", type="string", example="Unauthorized. You do not have permission to view this employee as they belong to a different company.")
+     *                 ),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="success", type="boolean", example=false),
+     *                     @OA\Property(property="message", type="string", example="Unauthorized. You can only view employees you supervise.")
+     *                 )
+     *             }
      *         )
      *     )
      * )
@@ -586,10 +594,20 @@ class EmployeeController extends ApiController
     {
         $user = $request->user();
         
-        // Find employee with company filtering
+        // First check if employee exists at all
+        $employeeExists = Employee::where('id', $id)->exists();
+        if (!$employeeExists) {
+            return $this->errorResponse('Employee not found.', 404);
+        }
+        
+        // Then check if employee belongs to user's company
         $employee = Employee::where('id', $id)
             ->where('company_id', $user->company_id)
-            ->firstOrFail();
+            ->first();
+            
+        if (!$employee) {
+            return $this->errorResponse('Unauthorized. You do not have permission to view this employee as they belong to a different company.', 403);
+        }
 
         // Apply role-based access control
         if ($user->isSupervisor() && !$user->isAdmin()) {
