@@ -132,6 +132,10 @@ class EmployeeController extends ApiController
 
         $query = Employee::query();
 
+        // Filter by user's company_id
+        $user = $request->user();
+        $query->where('company_id', $user->company_id);
+
         // Search by name
         if ($request->has('search')) {
             $search = $request->input('search');
@@ -148,7 +152,6 @@ class EmployeeController extends ApiController
         }
 
         // Apply role-based access control
-        $user = $request->user();
         if ($user->isSupervisor()) {
             // Supervisors can only see their supervisees
             $employee = $user->employee;
