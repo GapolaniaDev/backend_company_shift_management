@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Employee;
 use App\Models\User;
+use App\Http\Resources\EmployeeResource;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\Validator;
@@ -132,6 +133,10 @@ class EmployeeController extends ApiController
 
         $query = Employee::query();
 
+        // Filter by user's company_id
+        $user = $request->user();
+        $query->where('company_id', $user->company_id);
+
         // Search by name
         if ($request->has('search')) {
             $search = $request->input('search');
@@ -148,7 +153,6 @@ class EmployeeController extends ApiController
         }
 
         // Apply role-based access control
-        $user = $request->user();
         if ($user->isSupervisor()) {
             // Supervisors can only see their supervisees
             $employee = $user->employee;
@@ -383,8 +387,8 @@ class EmployeeController extends ApiController
     /**
      * @OA\Get(
      *     path="/api/employees/{id}",
-     *     summary="View employee",
-     *     description="Displays detailed information about a specific employee",
+     *     summary="Get complete employee profile",
+     *     description="Returns comprehensive employee information including shifts, assignments, replacement requests, bids, clock activity, and audit data based on user permissions",
      *     operationId="showEmployee",
      *     tags={"Employees"},
      *     security={{"bearerAuth":{}}},
@@ -397,38 +401,156 @@ class EmployeeController extends ApiController
      *     ),
      *     @OA\Response(
      *         response=200,
-     *         description="Employee information",
+     *         description="Complete employee profile information",
      *         @OA\JsonContent(
      *             @OA\Property(property="success", type="boolean", example=true),
      *             @OA\Property(
      *                 property="data",
      *                 type="object",
      *                 @OA\Property(property="id", type="integer", example=1),
-     *                 @OA\Property(property="user_id", type="integer", example=1, nullable=true),
-     *                 @OA\Property(property="supervisor_id", type="integer", example=5, nullable=true),
-     *                 @OA\Property(property="first_name", type="string", example="John"),
-     *                 @OA\Property(property="last_name", type="string", example="Doe"),
-     *                 @OA\Property(property="email", type="string", example="john@example.com"),
-     *                 @OA\Property(property="phone_number", type="string", example="123-456-7890"),
-     *                 @OA\Property(property="address", type="string", example="123 Main Street"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(
+     *                     property="company",
+     *                     type="object",
+     *                     @OA\Property(property="id", type="integer", example=1),
+     *                     @OA\Property(property="name", type="string", example="Acme Inc")
+     *                 ),
      *                 @OA\Property(
      *                     property="supervisor",
      *                     type="object",
      *                     nullable=true,
      *                     @OA\Property(property="id", type="integer", example=5),
-     *                     @OA\Property(property="first_name", type="string", example="Anna"),
-     *                     @OA\Property(property="last_name", type="string", example="Garcia")
+     *                     @OA\Property(property="name", type="string", example="Jane Smith")
      *                 ),
      *                 @OA\Property(
-     *                     property="shifts",
+     *                     property="user",
+     *                     type="object",
+     *                     nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=10),
+     *                     @OA\Property(property="email", type="string", example="john.doe@acme.com"),
+     *                     @OA\Property(property="role", type="string", example="employee"),
+     *                     @OA\Property(property="email_verified_at", type="string", format="date-time", nullable=true)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="summary",
+     *                     type="object",
+     *                     @OA\Property(property="first_name", type="string", example="John"),
+     *                     @OA\Property(property="last_name", type="string", example="Doe"),
+     *                     @OA\Property(property="email", type="string", example="john.doe@acme.com"),
+     *                     @OA\Property(property="phone_number", type="string", example="+61 401 234 567"),
+     *                     @OA\Property(property="weekly_working_hours", type="number", format="float", example=38)
+     *                 ),
+     *                 @OA\Property(
+     *                     property="personal",
+     *                     type="object",
+     *                     description="Sensitive data visible only to admins and supervisors",
+     *                     @OA\Property(property="address", type="string", example="123 Main St, Sydney NSW"),
+     *                     @OA\Property(property="tax_number", type="string", example="TN123456"),
+     *                     @OA\Property(property="abn", type="string", example="12345678901"),
+     *                     @OA\Property(property="bsb", type="string", example="062000"),
+     *                     @OA\Property(property="account", type="string", example="12345678")
+     *                 ),
+     *                 @OA\Property(
+     *                     property="upcoming_shifts",
      *                     type="array",
+     *                     description="Shifts for current and next week",
      *                     @OA\Items(
      *                         type="object",
      *                         @OA\Property(property="id", type="integer", example=101),
      *                         @OA\Property(property="date_start", type="string", format="date-time"),
      *                         @OA\Property(property="date_end", type="string", format="date-time"),
-     *                         @OA\Property(property="total_hours", type="number", format="float", example=8.5)
+     *                         @OA\Property(property="total_hours", type="number", format="float", example=8.0),
+     *                         @OA\Property(property="status", type="string", example="not_started"),
+     *                         @OA\Property(
+     *                             property="shift_type",
+     *                             type="object",
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="name", type="string", example="Morning Shift")
+     *                         ),
+     *                         @OA\Property(
+     *                             property="location",
+     *                             type="object",
+     *                             nullable=true,
+     *                             @OA\Property(property="id", type="integer", example=1),
+     *                             @OA\Property(property="name", type="string", example="Sydney HQ"),
+     *                             @OA\Property(property="address", type="string", example="456 George St, Sydney")
+     *                         )
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="assignments",
+     *                     type="array",
+     *                     description="Shift assignments for current and next week",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="shift_id", type="integer", example=101),
+     *                         @OA\Property(property="status", type="string", example="accepted"),
+     *                         @OA\Property(property="assignment_type", type="string", example="primary"),
+     *                         @OA\Property(property="assigned_at", type="string", format="date-time")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="replacement_requests",
+     *                     type="array",
+     *                     description="Active replacement requests",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="shift_assignment_id", type="integer", example=1),
+     *                         @OA\Property(property="status", type="string", example="pending"),
+     *                         @OA\Property(property="reason", type="string", example="Medical leave"),
+     *                         @OA\Property(property="urgency", type="string", example="high"),
+     *                         @OA\Property(property="needed_by", type="string", format="date-time", nullable=true)
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="replacement_bids",
+     *                     type="array",
+     *                     description="Active replacement bids",
+     *                     @OA\Items(
+     *                         type="object",
+     *                         @OA\Property(property="id", type="integer", example=1),
+     *                         @OA\Property(property="replacement_request_id", type="integer", example=1),
+     *                         @OA\Property(property="status", type="string", example="pending"),
+     *                         @OA\Property(property="bid_amount", type="number", format="float", example=100.00),
+     *                         @OA\Property(property="message", type="string", example="Available to cover"),
+     *                         @OA\Property(property="bid_at", type="string", format="date-time")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="clock_activity",
+     *                     type="object",
+     *                     @OA\Property(
+     *                         property="last_clock_on",
+     *                         type="object",
+     *                         nullable=true,
+     *                         @OA\Property(property="time", type="string", format="date-time"),
+     *                         @OA\Property(property="lat", type="number", format="float", example=-33.8688),
+     *                         @OA\Property(property="lng", type="number", format="float", example=151.2093),
+     *                         @OA\Property(property="timezone", type="string", example="Australia/Sydney")
+     *                     ),
+     *                     @OA\Property(
+     *                         property="last_clock_off",
+     *                         type="object",
+     *                         nullable=true,
+     *                         @OA\Property(property="time", type="string", format="date-time"),
+     *                         @OA\Property(property="lat", type="number", format="float", example=-33.8688),
+     *                         @OA\Property(property="lng", type="number", format="float", example=151.2093),
+     *                         @OA\Property(property="timezone", type="string", example="Australia/Sydney")
+     *                     )
+     *                 ),
+     *                 @OA\Property(
+     *                     property="audit",
+     *                     type="object",
+     *                     description="Security/audit data visible only to admins",
+     *                     nullable=true,
+     *                     @OA\Property(
+     *                         property="last_session",
+     *                         type="object",
+     *                         nullable=true,
+     *                         @OA\Property(property="ip_address", type="string", example="192.168.1.10"),
+     *                         @OA\Property(property="user_agent", type="string", example="Mozilla/5.0"),
+     *                         @OA\Property(property="last_activity", type="string", format="date-time")
      *                     )
      *                 )
      *             )
@@ -438,35 +560,99 @@ class EmployeeController extends ApiController
      *         response=404,
      *         description="Employee not found",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="No query results for model [App\\Models\\Employee] 99")
+     *             @OA\Property(property="success", type="boolean", example=false),
+     *             @OA\Property(property="message", type="string", example="Employee not found.")
      *         )
      *     ),
      *     @OA\Response(
      *         response=401,
      *         description="Unauthenticated",
      *         @OA\JsonContent(
+     *             @OA\Property(property="success", type="boolean", example=false),
      *             @OA\Property(property="message", type="string", example="Unauthenticated")
      *         )
      *     ),
      *     @OA\Response(
      *         response=403,
-     *         description="Forbidden",
+     *         description="Forbidden - Different scenarios",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthorized. Insufficient permissions.")
+     *             oneOf={
+     *                 @OA\Schema(
+     *                     @OA\Property(property="success", type="boolean", example=false),
+     *                     @OA\Property(property="message", type="string", example="Unauthorized. You do not have permission to view this employee as they belong to a different company.")
+     *                 ),
+     *                 @OA\Schema(
+     *                     @OA\Property(property="success", type="boolean", example=false),
+     *                     @OA\Property(property="message", type="string", example="Unauthorized. You can only view employees you supervise.")
+     *                 )
+     *             }
      *         )
      *     )
      * )
      */
-    public function show(string $id)
+    public function show(Request $request, string $id)
     {
-        $employee = Employee::findOrFail($id);
+        $user = $request->user();
+        
+        // First check if employee exists at all
+        $employeeExists = Employee::where('id', $id)->exists();
+        if (!$employeeExists) {
+            return $this->errorResponse('Employee not found.', 404);
+        }
+        
+        // Then check if employee belongs to user's company
+        $employee = Employee::where('id', $id)
+            ->where('company_id', $user->company_id)
+            ->first();
+            
+        if (!$employee) {
+            return $this->errorResponse('Unauthorized. You do not have permission to view this employee as they belong to a different company.', 403);
+        }
 
-        // Load related data
-        $employee->load(['supervisor', 'shifts' => function ($query) {
-            $query->latest()->limit(10);
-        }]);
+        // Apply role-based access control
+        if ($user->isSupervisor() && !$user->isAdmin()) {
+            $supervisorEmployee = $user->employee;
+            if (!$supervisorEmployee || $employee->supervisor_id !== $supervisorEmployee->id) {
+                return $this->errorResponse('Unauthorized. You can only view employees you supervise.', 403);
+            }
+        }
 
-        return $this->successResponse($employee);
+        // Eager load all related data with optimized queries
+        $employee->load([
+            'company',
+            'supervisor',
+            'user',
+            'shifts' => function ($query) {
+                $query->with(['shiftType', 'location'])
+                      ->whereBetween('date_start', [
+                          now()->startOfWeek(),
+                          now()->addWeek()->endOfWeek()
+                      ])
+                      ->orderBy('date_start');
+            },
+            'shiftAssignments' => function ($query) {
+                $query->with('shift')
+                      ->whereHas('shift', function ($shiftQuery) {
+                          $shiftQuery->whereBetween('date_start', [
+                              now()->startOfWeek(),
+                              now()->addWeek()->endOfWeek()
+                          ]);
+                      });
+            },
+            'replacementRequests' => function ($query) {
+                $query->where('status', '!=', 'fulfilled')
+                      ->with('shiftAssignment.shift')
+                      ->latest();
+            },
+            'replacementBids' => function ($query) {
+                $query->where('bid_status', '!=', 'rejected')
+                      ->with('replacementRequest.shiftAssignment.shift')
+                      ->latest();
+            }
+        ]);
+
+
+        return $this->successResponse(new EmployeeResource($employee));
     }
 
     /**

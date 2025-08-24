@@ -1,0 +1,16 @@
+query TestEmptyStrings {
+  locations(first: 10, ids: [], is_active: false, name: "", page: 1) {
+    data {
+      id
+      name
+      address
+      is_active
+    }
+    paginatorInfo {
+      count
+      currentPage
+      total
+      hasMorePages
+    }
+  }
+}

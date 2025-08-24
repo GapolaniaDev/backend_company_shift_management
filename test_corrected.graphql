@@ -1,0 +1,29 @@
+query MyQuery {
+  locations(first: 10, is_active: false, name: "", page: 1) {
+    data {
+      address
+      company_id
+      created_at
+      description
+      id
+      is_active
+      latitude
+      longitude
+      name
+      radius
+      timezone
+      updated_at
+      zoom
+    }
+    paginatorInfo {
+      count
+      currentPage
+      firstItem
+      hasMorePages
+      lastItem
+      lastPage
+      perPage
+      total
+    }
+  }
+}

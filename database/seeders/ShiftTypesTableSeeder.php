@@ -15,6 +15,7 @@ class ShiftTypesTableSeeder extends Seeder
         $dimeoCompany = Company::where('slug', 'dimeo')->first();
         $corporateCleanCompany = Company::where('slug', 'corporate-clean')->first();
         $bioGreenCompany = Company::where('slug', 'bio-green-family')->first();
+        $adelaideFacilityCompany = Company::where('slug', 'adelaide-facility-services')->first();
 
         $shiftTypes = [
             // Default Company Shift Types
@@ -98,6 +99,31 @@ class ShiftTypesTableSeeder extends Seeder
                     'Friday' => ['start' => '07:00', 'end' => '15:00'],
                 ]),
                 'company_id' => $bioGreenCompany->id,
+            ],
+            
+            // Adelaide Facility Services Shift Types
+            [
+                'name' => 'Commercial Facility Clean',
+                'description' => 'Comprehensive facility cleaning for Adelaide Facility Services',
+                'weekly_hours' => 35,
+                'schedule' => json_encode([
+                    'Monday' => ['start' => '06:00', 'end' => '13:00'],
+                    'Tuesday' => ['start' => '06:00', 'end' => '13:00'],
+                    'Wednesday' => ['start' => '06:00', 'end' => '13:00'],
+                    'Thursday' => ['start' => '06:00', 'end' => '13:00'],
+                    'Friday' => ['start' => '06:00', 'end' => '13:00'],
+                ]),
+                'company_id' => $adelaideFacilityCompany->id,
+            ],
+            [
+                'name' => 'Weekend Maintenance',
+                'description' => 'Weekend facility maintenance and deep cleaning',
+                'weekly_hours' => 16,
+                'schedule' => json_encode([
+                    'Saturday' => ['start' => '08:00', 'end' => '16:00'],
+                    'Sunday' => ['start' => '12:00', 'end' => '20:00'],
+                ]),
+                'company_id' => $adelaideFacilityCompany->id,
             ],
         ];
 

@@ -3,8 +3,8 @@ type TemplateException {
   shift_template_id: ID!
   exception_date: Date!
   exception_type: TemplateExceptionType!
-  start_time: Time
-  end_time: Time
+  start_time: DateTime
+  end_time: DateTime
   hours: Float
   capacity: Int
   location_id: ID
@@ -12,7 +12,7 @@ type TemplateException {
   notes: String
   created_at: DateTime!
   updated_at: DateTime!
-  
+
   # Relationships
   shift_template: ShiftTemplate! @belongsTo
   location: Location @belongsTo
@@ -28,8 +28,8 @@ input TemplateExceptionInput {
   shift_template_id: ID!
   exception_date: Date!
   exception_type: TemplateExceptionType!
-  start_time: Time
-  end_time: Time
+  start_time: DateTime
+  end_time: DateTime
   capacity: Int
   location_id: ID
   reason: String
@@ -40,8 +40,8 @@ input TemplateExceptionUpdateInput {
   id: ID!
   exception_date: Date
   exception_type: TemplateExceptionType
-  start_time: Time
-  end_time: Time
+  start_time: DateTime
+  end_time: DateTime
   capacity: Int
   location_id: ID
   reason: String

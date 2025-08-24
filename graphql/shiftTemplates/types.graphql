@@ -6,8 +6,8 @@ type ShiftTemplate {
   name: String!
   description: String
   rrule: String!
-  start_time: Time!
-  end_time: Time!
+  start_time: DateTime!
+  end_time: DateTime!
   hours: Float!
   capacity: Int!
   auto_assign: Boolean!
@@ -17,7 +17,7 @@ type ShiftTemplate {
   metadata: JSON
   created_at: DateTime!
   updated_at: DateTime!
-  
+
   # Relationships
   company: Company! @belongsTo
   shift_type: ShiftType! @belongsTo
@@ -31,8 +31,8 @@ input ShiftTemplateInput {
   name: String!
   description: String
   rrule: String!
-  start_time: Time!
-  end_time: Time!
+  start_time: DateTime!
+  end_time: DateTime!
   capacity: Int = 1
   auto_assign: Boolean = false
   effective_from: Date!
@@ -48,8 +48,8 @@ input ShiftTemplateUpdateInput {
   name: String
   description: String
   rrule: String
-  start_time: Time
-  end_time: Time
+  start_time: DateTime
+  end_time: DateTime
   capacity: Int
   auto_assign: Boolean
   effective_from: Date

@@ -16,6 +16,12 @@ type Location {
   # Relationships
   company: Company! @belongsTo
   shift_templates: [ShiftTemplate!]! @hasMany
+  employees(
+    employee_ids: [ID!]
+    shift_type_ids: [ID!]
+    start_date: DateTime
+    end_date: DateTime
+  ): [Employee!]! @field(resolver: "App\\GraphQL\\Resolvers\\LocationResolver@employees")
 }
 
 input LocationInput {

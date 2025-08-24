@@ -6,6 +6,7 @@ use App\Models\Employee;
 use App\Models\Shift;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 class ShiftMutator
@@ -22,18 +23,20 @@ class ShiftMutator
             throw new \Nuwave\Lighthouse\Exceptions\AuthorizationException('User must belong to a company');
         }
 
-        // Validate business rules
-        $this->validateShiftData($args, $user->company_id);
+        return DB::transaction(function () use ($args, $user) {
+            // Validate business rules
+            $this->validateShiftData($args, $user->company_id);
 
-        // Force company_id from authenticated user
-        $args['company_id'] = $user->company_id;
+            // Force company_id from authenticated user
+            $args['company_id'] = $user->company_id;
 
-        // Validate shift hours and overlaps if employee is assigned
-        if (isset($args['employee_id'])) {
-            $this->validateEmployeeShift($args, $user->company_id);
-        }
+            // Validate shift hours and overlaps if employee is assigned
+            if (isset($args['employee_id'])) {
+                $this->validateEmployeeShift($args, $user->company_id);
+            }
 
-        return Shift::create($args);
+            return Shift::create($args);
+        });
     }
 
     public function update($root, array $args)
@@ -49,24 +52,26 @@ class ShiftMutator
         }
 
         $shiftId = $args['id'];
-        unset($args['id']);
+        unset($args['id'], $args['company_id']); // prevent company_id tampering
 
-        // Load shift and verify it belongs to user's company
-        $shift = Shift::where('id', $shiftId)
-            ->where('company_id', $user->company_id)
-            ->firstOrFail();
+        return DB::transaction(function () use ($args, $user, $shiftId) {
+            // Load shift and verify it belongs to user's company
+            $shift = Shift::where('id', $shiftId)
+                ->where('company_id', $user->company_id)
+                ->firstOrFail();
 
-        // Validate business rules with existing shift context
-        $this->validateShiftData($args, $user->company_id, $shift);
+            // Validate business rules with existing shift context
+            $this->validateShiftData($args, $user->company_id, $shift);
 
-        // Validate shift hours and overlaps if employee is assigned
-        if (isset($args['employee_id'])) {
-            $this->validateEmployeeShift($args, $user->company_id, $shift);
-        }
+            // Validate shift hours and overlaps if employee is assigned
+            if (isset($args['employee_id'])) {
+                $this->validateEmployeeShift($args, $user->company_id, $shift);
+            }
 
-        $shift->update($args);
+            $shift->update($args);
 
-        return $shift->fresh();
+            return $shift->fresh();
+        });
     }
 
     public function delete($root, array $args)
@@ -125,8 +130,8 @@ class ShiftMutator
     {
         $employeeId = $args['employee_id'];
 
-        // Get the employee and validate they belong to the same company
-        $employee = Employee::find($employeeId);
+        // 1) Buscar SIN scopes para distinguir "no existe" vs "otra empresa"
+        $employee = Employee::withoutGlobalScopes()->find($employeeId);
 
         if (! $employee) {
             throw ValidationException::withMessages([
@@ -134,28 +139,43 @@ class ShiftMutator
             ]);
         }
 
-        // For now, we'll skip company validation since the company relationship
-        // structure needs clarification from the migrations
-
-        // Get shift dates
-        $dateStart = isset($args['date_start']) ? Carbon::parse($args['date_start']) :
-                     ($existingShift ? $existingShift->date_start : null);
-        $dateEnd = isset($args['date_end']) ? Carbon::parse($args['date_end']) :
-                   ($existingShift ? $existingShift->date_end : null);
-
-        if (! $dateStart || ! $dateEnd) {
-            return; // Can't validate without dates
+        // 2) Debe pertenecer a la misma compañía
+        if ((int) $employee->company_id !== (int) $companyId) {
+            throw ValidationException::withMessages([
+                'employee_id' => ['Employee must belong to the same company.'],
+            ]);
         }
 
-        $totalHours = isset($args['total_hours']) ? $args['total_hours'] :
-                      ($existingShift ? $existingShift->total_hours : 0);
+        // Obtener fechas del turno (de input o del shift existente)
+        $dateStart = isset($args['date_start']) ? Carbon::parse($args['date_start'])
+                    : ($existingShift ? $existingShift->date_start : null);
+        $dateEnd   = isset($args['date_end']) ? Carbon::parse($args['date_end'])
+                    : ($existingShift ? $existingShift->date_end : null);
 
-        // Check for overlapping shifts
-        $this->validateShiftOverlap($employeeId, $dateStart, $dateEnd, $existingShift ? $existingShift->id : null);
+        if (! $dateStart || ! $dateEnd) {
+            return; // No se puede validar solapamiento ni horas sin fechas
+        }
 
-        // Check weekly working hours limit
+        $totalHours = isset($args['total_hours']) ? (float) $args['total_hours']
+                    : ($existingShift ? (float) $existingShift->total_hours : 0.0);
+
+        // Validar solapamiento
+        $this->validateShiftOverlap(
+            $employeeId,
+            $dateStart,
+            $dateEnd,
+            $existingShift ? $existingShift->id : null
+        );
+
+        // Validar límite de horas semanales
         if ($employee->weekly_working_hours) {
-            $this->validateWeeklyHours($employeeId, $dateStart, $totalHours, $existingShift ? $existingShift->id : null, $employee->weekly_working_hours);
+            $this->validateWeeklyHours(
+                $employeeId,
+                $dateStart,
+                $totalHours,
+                $existingShift ? $existingShift->id : null,
+                (float) $employee->weekly_working_hours
+            );
         }
     }
 

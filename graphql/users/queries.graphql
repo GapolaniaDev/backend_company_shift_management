@@ -7,4 +7,13 @@ extend type Query {
   me: User
     @guard(with: ["api"])
     @auth
+
+  # Profile specific queries
+  profile: User
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Queries\\ProfileQuery@profile")
+    
+  profileWithEmployee: User
+    @guard(with: ["api"])
+    @field(resolver: "App\\GraphQL\\Queries\\ProfileQuery@profileWithEmployee")
 }

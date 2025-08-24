@@ -17,12 +17,23 @@ class DatabaseSeeder extends Seeder
             DefaultCompanySeeder::class,
             CompaniesSeeder::class,
             
-            // Then create tenant data
-            UserSeeder::class,
-            EmployeesTableSeeder::class,
+            // Create locations with real Adelaide addresses
+            LocationsSeeder::class,
+            
+            // Create enhanced user structure
+            EnhancedUsersSeeder::class,
+            
+            // Create shift types for all companies
             ShiftTypesTableSeeder::class,
-            ShiftConfigurationsTableSeeder::class,
-            ShiftsTableSeeder::class,
+            
+            // Generate comprehensive shifts for full year (Jul 2025 - Jun 2026)
+            ComprehensiveShiftsSeeder::class,
+            
+            // Legacy seeders (can be commented out if not needed)
+            // UserSeeder::class,
+            // EmployeesTableSeeder::class,
+            // ShiftConfigurationsTableSeeder::class,
+            // ShiftsTableSeeder::class,
         ]);
     }
 }

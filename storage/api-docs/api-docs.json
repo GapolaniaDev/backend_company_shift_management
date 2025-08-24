@@ -1105,8 +1105,8 @@
                 "tags": [
                     "Employees"
                 ],
-                "summary": "View employee",
-                "description": "Displays detailed information about a specific employee",
+                "summary": "Get complete employee profile",
+                "description": "Returns comprehensive employee information including shifts, assignments, replacement requests, bids, clock activity, and audit data based on user permissions",
                 "operationId": "showEmployee",
                 "parameters": [
                     {
@@ -1121,7 +1121,7 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Employee information",
+                        "description": "Complete employee profile information",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -1136,39 +1136,18 @@
                                                     "type": "integer",
                                                     "example": 1
                                                 },
-                                                "user_id": {
-                                                    "type": "integer",
-                                                    "example": 1,
-                                                    "nullable": true
-                                                },
-                                                "supervisor_id": {
-                                                    "type": "integer",
-                                                    "example": 5,
-                                                    "nullable": true
-                                                },
-                                                "first_name": {
-                                                    "type": "string",
-                                                    "example": "John"
-                                                },
-                                                "last_name": {
-                                                    "type": "string",
-                                                    "example": "Doe"
-                                                },
-                                                "email": {
-                                                    "type": "string",
-                                                    "example": "john@example.com"
-                                                },
-                                                "phone_number": {
-                                                    "type": "string",
-                                                    "example": "123-456-7890"
-                                                },
-                                                "address": {
-                                                    "type": "string",
-                                                    "example": "123 Main Street"
-                                                },
-                                                "created_at": {
-                                                    "type": "string",
-                                                    "format": "date-time"
+                                                "company": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "name": {
+                                                            "type": "string",
+                                                            "example": "Acme Inc"
+                                                        }
+                                                    },
+                                                    "type": "object"
                                                 },
                                                 "supervisor": {
                                                     "properties": {
@@ -1176,19 +1155,91 @@
                                                             "type": "integer",
                                                             "example": 5
                                                         },
-                                                        "first_name": {
+                                                        "name": {
                                                             "type": "string",
-                                                            "example": "Anna"
-                                                        },
-                                                        "last_name": {
-                                                            "type": "string",
-                                                            "example": "Garcia"
+                                                            "example": "Jane Smith"
                                                         }
                                                     },
                                                     "type": "object",
                                                     "nullable": true
                                                 },
-                                                "shifts": {
+                                                "user": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "john.doe@acme.com"
+                                                        },
+                                                        "role": {
+                                                            "type": "string",
+                                                            "example": "employee"
+                                                        },
+                                                        "email_verified_at": {
+                                                            "type": "string",
+                                                            "format": "date-time",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
+                                                },
+                                                "summary": {
+                                                    "properties": {
+                                                        "first_name": {
+                                                            "type": "string",
+                                                            "example": "John"
+                                                        },
+                                                        "last_name": {
+                                                            "type": "string",
+                                                            "example": "Doe"
+                                                        },
+                                                        "email": {
+                                                            "type": "string",
+                                                            "example": "john.doe@acme.com"
+                                                        },
+                                                        "phone_number": {
+                                                            "type": "string",
+                                                            "example": "+61 401 234 567"
+                                                        },
+                                                        "weekly_working_hours": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 38
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "personal": {
+                                                    "description": "Sensitive data visible only to admins and supervisors",
+                                                    "properties": {
+                                                        "address": {
+                                                            "type": "string",
+                                                            "example": "123 Main St, Sydney NSW"
+                                                        },
+                                                        "tax_number": {
+                                                            "type": "string",
+                                                            "example": "TN123456"
+                                                        },
+                                                        "abn": {
+                                                            "type": "string",
+                                                            "example": "12345678901"
+                                                        },
+                                                        "bsb": {
+                                                            "type": "string",
+                                                            "example": "062000"
+                                                        },
+                                                        "account": {
+                                                            "type": "string",
+                                                            "example": "12345678"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "upcoming_shifts": {
+                                                    "description": "Shifts for current and next week",
                                                     "type": "array",
                                                     "items": {
                                                         "properties": {
@@ -1207,11 +1258,221 @@
                                                             "total_hours": {
                                                                 "type": "number",
                                                                 "format": "float",
-                                                                "example": 8.5
+                                                                "example": 8
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "not_started"
+                                                            },
+                                                            "shift_type": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Morning Shift"
+                                                                    }
+                                                                },
+                                                                "type": "object"
+                                                            },
+                                                            "location": {
+                                                                "properties": {
+                                                                    "id": {
+                                                                        "type": "integer",
+                                                                        "example": 1
+                                                                    },
+                                                                    "name": {
+                                                                        "type": "string",
+                                                                        "example": "Sydney HQ"
+                                                                    },
+                                                                    "address": {
+                                                                        "type": "string",
+                                                                        "example": "456 George St, Sydney"
+                                                                    }
+                                                                },
+                                                                "type": "object",
+                                                                "nullable": true
                                                             }
                                                         },
                                                         "type": "object"
                                                     }
+                                                },
+                                                "assignments": {
+                                                    "description": "Shift assignments for current and next week",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "shift_id": {
+                                                                "type": "integer",
+                                                                "example": 101
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "accepted"
+                                                            },
+                                                            "assignment_type": {
+                                                                "type": "string",
+                                                                "example": "primary"
+                                                            },
+                                                            "assigned_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "replacement_requests": {
+                                                    "description": "Active replacement requests",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "shift_assignment_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "pending"
+                                                            },
+                                                            "reason": {
+                                                                "type": "string",
+                                                                "example": "Medical leave"
+                                                            },
+                                                            "urgency": {
+                                                                "type": "string",
+                                                                "example": "high"
+                                                            },
+                                                            "needed_by": {
+                                                                "type": "string",
+                                                                "format": "date-time",
+                                                                "nullable": true
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "replacement_bids": {
+                                                    "description": "Active replacement bids",
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "replacement_request_id": {
+                                                                "type": "integer",
+                                                                "example": 1
+                                                            },
+                                                            "status": {
+                                                                "type": "string",
+                                                                "example": "pending"
+                                                            },
+                                                            "bid_amount": {
+                                                                "type": "number",
+                                                                "format": "float",
+                                                                "example": 100
+                                                            },
+                                                            "message": {
+                                                                "type": "string",
+                                                                "example": "Available to cover"
+                                                            },
+                                                            "bid_at": {
+                                                                "type": "string",
+                                                                "format": "date-time"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "clock_activity": {
+                                                    "properties": {
+                                                        "last_clock_on": {
+                                                            "properties": {
+                                                                "time": {
+                                                                    "type": "string",
+                                                                    "format": "date-time"
+                                                                },
+                                                                "lat": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": -33.8688
+                                                                },
+                                                                "lng": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 151.2093
+                                                                },
+                                                                "timezone": {
+                                                                    "type": "string",
+                                                                    "example": "Australia/Sydney"
+                                                                }
+                                                            },
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        },
+                                                        "last_clock_off": {
+                                                            "properties": {
+                                                                "time": {
+                                                                    "type": "string",
+                                                                    "format": "date-time"
+                                                                },
+                                                                "lat": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": -33.8688
+                                                                },
+                                                                "lng": {
+                                                                    "type": "number",
+                                                                    "format": "float",
+                                                                    "example": 151.2093
+                                                                },
+                                                                "timezone": {
+                                                                    "type": "string",
+                                                                    "example": "Australia/Sydney"
+                                                                }
+                                                            },
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                },
+                                                "audit": {
+                                                    "description": "Security/audit data visible only to admins",
+                                                    "properties": {
+                                                        "last_session": {
+                                                            "properties": {
+                                                                "ip_address": {
+                                                                    "type": "string",
+                                                                    "example": "192.168.1.10"
+                                                                },
+                                                                "user_agent": {
+                                                                    "type": "string",
+                                                                    "example": "Mozilla/5.0"
+                                                                },
+                                                                "last_activity": {
+                                                                    "type": "string",
+                                                                    "format": "date-time"
+                                                                }
+                                                            },
+                                                            "type": "object",
+                                                            "nullable": true
+                                                        }
+                                                    },
+                                                    "type": "object",
+                                                    "nullable": true
                                                 }
                                             },
                                             "type": "object"
@@ -1228,9 +1489,13 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
                                         "message": {
                                             "type": "string",
-                                            "example": "No query results for model [App\\\\Models\\\\Employee] 99"
+                                            "example": "Employee not found."
                                         }
                                     },
                                     "type": "object"
@@ -1244,6 +1509,10 @@
                             "application/json": {
                                 "schema": {
                                     "properties": {
+                                        "success": {
+                                            "type": "boolean",
+                                            "example": false
+                                        },
                                         "message": {
                                             "type": "string",
                                             "example": "Unauthenticated"
@@ -1255,17 +1524,38 @@
                         }
                     },
                     "403": {
-                        "description": "Forbidden",
+                        "description": "Forbidden - Different scenarios",
                         "content": {
                             "application/json": {
                                 "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthorized. Insufficient permissions."
+                                    "oneOf": [
+                                        {
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Unauthorized. You do not have permission to view this employee as they belong to a different company."
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        {
+                                            "properties": {
+                                                "success": {
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "message": {
+                                                    "type": "string",
+                                                    "example": "Unauthorized. You can only view employees you supervise."
+                                                }
+                                            },
+                                            "type": "object"
                                         }
-                                    },
-                                    "type": "object"
+                                    ]
                                 }
                             }
                         }

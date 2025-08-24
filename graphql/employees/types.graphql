@@ -19,7 +19,7 @@ type Employee {
   user: User @belongsTo
   supervisor: Employee @belongsTo
   supervisees: [Employee!]! @hasMany
-  shifts: [Shift!]! @hasMany
+  shifts(filter: ShiftFilterInput): [Shift!]! @field(resolver: "App\\GraphQL\\Resolvers\\EmployeeResolver@shifts")
 }
 
 
