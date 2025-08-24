@@ -33,7 +33,7 @@ class CompaniesSeeder extends Seeder
             ]
         );
 
-        // Create Bio Green Family company (placeholder since we couldn't get specific info)
+        // Create Bio Green Family company
         Company::firstOrCreate(
             ['slug' => 'bio-green-family'],
             [
@@ -43,9 +43,20 @@ class CompaniesSeeder extends Seeder
             ]
         );
 
+        // Create Adelaide Facility Services company
+        Company::firstOrCreate(
+            ['slug' => 'adelaide-facility-services'],
+            [
+                'name' => 'Adelaide Facility Services',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ]
+        );
+
         $this->command->info('✅ Companies created successfully:');
         $this->command->info('   - Dimeo (slug: dimeo)');
         $this->command->info('   - Corporate Clean Property Services (slug: corporate-clean)');
         $this->command->info('   - Bio Green Family Pty Ltd (slug: bio-green-family)');
+        $this->command->info('   - Adelaide Facility Services (slug: adelaide-facility-services)');
     }
 }
