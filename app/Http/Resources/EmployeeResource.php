@@ -59,7 +59,10 @@ class EmployeeResource extends JsonResource
             'upcoming_shifts' => $this->when(
                 $this->shifts,
                 $this->shifts
-                    ->whereBetween('date_start', [$currentWeekStart, $nextWeekEnd])
+                    ->filter(function ($shift) use ($currentWeekStart, $nextWeekEnd) {
+                        return $shift->date_start >= $currentWeekStart && 
+                               $shift->date_start <= $nextWeekEnd;
+                    })
                     ->map(function ($shift) {
                         return [
                             'id' => $shift->id,
