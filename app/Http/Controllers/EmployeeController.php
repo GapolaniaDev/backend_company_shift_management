@@ -82,7 +82,15 @@ class EmployeeController extends ApiController
      *                 @OA\Property(property="last_name", type="string", example="Smith"),
      *                 @OA\Property(property="email", type="string", example="john@example.com"),
      *                 @OA\Property(property="phone_number", type="string", example="123-456-7890"),
-     *                 @OA\Property(property="created_at", type="string", format="date-time")
+     *                 @OA\Property(property="created_at", type="string", format="date-time"),
+     *                 @OA\Property(
+     *                     property="supervisor",
+     *                     type="object",
+     *                     nullable=true,
+     *                     @OA\Property(property="id", type="integer", example=5),
+     *                     @OA\Property(property="first_name", type="string", example="Jane"),
+     *                     @OA\Property(property="last_name", type="string", example="Garcia")
+     *                 )
      *             )),
      *             @OA\Property(
      *                 property="pagination",
@@ -172,7 +180,7 @@ class EmployeeController extends ApiController
             $query->orderBy($sortBy, $sortDir === 'asc' ? 'asc' : 'desc');
         }
 
-        $employees = $query->paginate($pageSize, ['*'], 'page', $page);
+        $employees = $query->with('supervisor:id,first_name,last_name')->paginate($pageSize, ['*'], 'page', $page);
 
         return $this->paginatedResponse($employees);
     }
